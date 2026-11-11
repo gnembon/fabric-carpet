@@ -7,6 +7,9 @@
     "SpawnState_scarpetMixin",
     "MobCategory_spawnMixin",
     "Commands_customCommandsMixin",
+    "CommandBox_customRequirementsMixin",
+    "ParseContext_commandSourceMixin",
+    "PermissionCheckTypes_carpetMixin",
     "ServerGamePacketListenerImplMixin",
 
     "PerfCommand_permissionMixin",
@@ -145,6 +148,7 @@
     "SystemReport_addScarpetAppsMixin",
     "CommandNode_scarpetCommandsMixin",
     "CommandDispatcher_scarpetCommandsMixin",
+    "CommandBoxAccessor",
     "FoodData_scarpetMixin",
     "CommandSourceStack_scarpetMixin",
     "Brain_scarpetMixin",

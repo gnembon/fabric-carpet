@@ -21,13 +21,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 import com.google.common.collect.Lists;
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.DoubleArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.LongArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.ParsedCommandNode;
@@ -54,12 +48,15 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.predicates.MinMaxBounds;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.AngleArgument;
+import net.minecraft.commands.arguments.BooleanArgument;
+import net.minecraft.commands.arguments.DoubleArgument;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.IntegerArgument;
+import net.minecraft.commands.arguments.LongArgument;
+import net.minecraft.commands.arguments.StringArgument;
 import net.minecraft.commands.arguments.TeamColorArgument;
 import net.minecraft.commands.arguments.CompoundTagArgument;
 import net.minecraft.commands.arguments.DimensionArgument;
@@ -83,13 +80,17 @@ import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.commands.arguments.blocks.BlockPredicateArgument;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
+import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
 import net.minecraft.commands.arguments.coordinates.RotationArgument;
 import net.minecraft.commands.arguments.coordinates.SwizzleArgument;
 import net.minecraft.commands.arguments.coordinates.Vec2Argument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.commands.arguments.item.ItemArgument;
-import net.minecraft.commands.synchronization.SuggestionProviders;
+import net.minecraft.commands.suggestions.SuggestAvailableSounds;
+import net.minecraft.commands.suggestions.SuggestSummonableEntities;
+import net.minecraft.commands.suggestions.SuggestionContext;
+import net.minecraft.commands.suggestions.SuggestionProviders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -101,7 +102,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.commands.BossBarCommands;
-import net.minecraft.server.commands.LootCommand;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.biome.Biome;
@@ -122,10 +123,10 @@ public abstract class CommandArgument
 
     private static final List<? extends CommandArgument> baseTypes = Lists.newArrayList(
             // default
-            new StringArgument(),
+            new ScarpetStringArgument(),
             // vanilla arguments as per https://minecraft.wiki/w/Argument_types
-            new VanillaUnconfigurableArgument("bool", BoolArgumentType::bool,
-                    (c, p) -> BooleanValue.of(BoolArgumentType.getBool(c, p)), false
+            new VanillaUnconfigurableArgument("bool", BooleanArgument::bool,
+                    (c, p) -> BooleanValue.of(BooleanArgument.getBool(c, p)), false
             ),
             new FloatArgument(),
             new IntArgument(),
@@ -133,17 +134,17 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("yaw", AngleArgument::angle,  // angle
                     (c, p) -> new NumericValue(AngleArgument.getAngle(c, p)), true
             ),
-            new BlockPosArgument(),
+            new ScarpetBlockPosArgument(),
             new VanillaUnconfigurableArgument("block", BlockStateArgument::block,
                     (c, p) -> {
                         BlockInput result = BlockStateArgument.getBlock(c, p);
                         return new BlockValue(result.getState(), c.getSource().getLevel(), Vanilla.BlockInput_getTag(result));
                     },
-                    param -> (ctx, builder) -> ctx.getArgument(param, BlockStateArgument.class).listSuggestions(ctx, builder)
+                    false
             ),
             new VanillaUnconfigurableArgument("blockpredicate", BlockPredicateArgument::blockPredicate,
                     (c, p) -> ValueConversions.ofBlockPredicate(c.getSource().getServer().registryAccess(), BlockPredicateArgument.getBlockPredicate(c, p)),
-                    param -> (ctx, builder) -> ctx.getArgument(param, BlockPredicateArgument.class).listSuggestions(ctx, builder)
+                    false
             ),
             new VanillaUnconfigurableArgument("teamcolor", TeamColorArgument::teamColor,
                     (c, p) -> {
@@ -159,12 +160,12 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("dimension", DimensionArgument::dimension,
                     (c, p) -> ValueConversions.of(DimensionArgument.getDimension(c, p)), false
             ),
-            new EntityArgument(),
+            new ScarpetEntityArgument(),
             new VanillaUnconfigurableArgument("anchor", EntityAnchorArgument::anchor,
                     (c, p) -> StringValue.of(EntityAnchorArgument.getAnchor(c, p).name()), false
             ),
-            new VanillaUnconfigurableArgument("entitytype", c -> ResourceArgument.resource(c, Registries.ENTITY_TYPE),
-                    (c, p) -> ValueConversions.of(ResourceArgument.getSummonableEntityType(c, p).key()), SuggestionProviders.cast(SuggestionProviders.SUMMONABLE_ENTITIES)
+            new VanillaUnconfigurableArgument("entitytype", () -> ResourceArgument.resource(Registries.ENTITY_TYPE),
+                    (c, p) -> ValueConversions.of(ResourceArgument.getSummonableEntityType(c, p).key()), SuggestSummonableEntities.suggestSummonableEntities()
             ),
             new VanillaUnconfigurableArgument("floatrange", RangeArgument::floatRange,
                     (c, p) -> ValueConversions.of(c.getArgument(p, MinMaxBounds.Doubles.class)), true
@@ -180,8 +181,8 @@ public abstract class CommandArgument
             // item_predicate  ?? //same as item but accepts tags, not sure right now
             new SlotArgument(),
             new VanillaUnconfigurableArgument("item", ItemArgument::item,
-                    (c, p) -> ValueConversions.of(ItemArgument.getItem(c, p).createItemStack(1), c.getSource().registryAccess()),
-                    param -> (ctx, builder) -> ctx.getArgument(param, ItemArgument.class).listSuggestions(ctx, builder)
+                    (c, p) -> ValueConversions.of(ItemArgument.getItem(c, p).createItemStack(1), c.getSource().getServer().registryAccess()),
+                    false
             ),
             new VanillaUnconfigurableArgument("message", MessageArgument::message,
                     (c, p) -> new FormattedTextValue(MessageArgument.getMessage(c, p)), true
@@ -200,7 +201,7 @@ public abstract class CommandArgument
             ),
             // operation // not sure if we need it, you have scarpet for that
             new VanillaUnconfigurableArgument("particle", ParticleArgument::particle,
-                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p), c.getSource().registryAccess()), (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().lookupOrThrow(Registries.PARTICLE_TYPE).keySet(), b)
+                    (c, p) -> ValueConversions.of(ParticleArgument.getParticle(c, p), c.getSource().getServer().registryAccess()), false
             ),
 
             // resource / identifier section
@@ -215,9 +216,9 @@ public abstract class CommandArgument
                     (c, p) -> ValueConversions.of(IdentifierArgument.getId(c, p)), BossBarCommands.SUGGEST_BOSS_BAR
             ),
 
-            new VanillaUnconfigurableArgument("biome", c -> ResourceOrTagArgument.resourceOrTag(c, Registries.BIOME),
+            new VanillaUnconfigurableArgument("biome", () -> ResourceOrTagArgument.resourceOrTag(Registries.BIOME),
                     (c, p) -> {
-                        ResourceOrTagArgument.Result<Biome> result = ResourceOrTagArgument.getResourceOrTag(c, "biome", Registries.BIOME);
+                        ResourceOrTagArgument.Result<Biome> result = ResourceOrTagArgument.getResourceOrTag(c, p, Registries.BIOME);
                         Either<Holder.Reference<Biome>, HolderSet.Named<Biome>> res = result.unwrap();
                         if (res.left().isPresent())
                         {
@@ -228,13 +229,13 @@ public abstract class CommandArgument
                             return ValueConversions.of(res.right().get().key());
                         }
                         return Value.NULL;
-                    }, (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().registryAccess().lookupOrThrow(Registries.BIOME).keySet(), builder)
+                    }, false
             ),
             new VanillaUnconfigurableArgument("sound", IdentifierArgument::id,
-                    (c, p) -> ValueConversions.of(IdentifierArgument.getId(c, p)), SuggestionProviders.cast(SuggestionProviders.AVAILABLE_SOUNDS)
+                    (c, p) -> ValueConversions.of(IdentifierArgument.getId(c, p)), SuggestAvailableSounds.suggestAvailableSounds()
             ),
             new VanillaUnconfigurableArgument("storekey", IdentifierArgument::id,
-                    (c, p) -> ValueConversions.of(IdentifierArgument.getId(c, p)), (ctx, builder) -> SharedSuggestionProvider.suggestResource(ctx.getSource().getServer().getCommandStorage().keys(), builder)
+                    (c, p) -> ValueConversions.of(IdentifierArgument.getId(c, p)), SuggestionProviders.serverOnly((server, ctx, builder) -> SuggestionContext.suggestResource(server.getCommandStorage().keys(), builder))
             ),
 
             // default
@@ -261,7 +262,7 @@ public abstract class CommandArgument
                     (c, p) -> StringValue.of(TeamArgument.getTeam(c, p).getName()), false
             ),
             new VanillaUnconfigurableArgument("time", TimeArgument::time,
-                    (c, p) -> new NumericValue(IntegerArgumentType.getInteger(c, p)), false
+                    (c, p) -> new NumericValue(IntegerArgument.getInteger(c, p)), false
             ),
             new VanillaUnconfigurableArgument("uuid", UuidArgument::uuid,
                     (c, p) -> StringValue.of(UuidArgument.getUuid(c, p).toString()), false
@@ -314,10 +315,23 @@ public abstract class CommandArgument
         }
         String hostName = host.getName();
         CarpetScriptServer scriptServer = host.scriptServer();
-        return argument(param, arg.getArgumentType(host)).suggests((ctx, b) -> {
-            CarpetScriptHost cHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(ctx.getSource());
-            return arg.suggest(ctx, b, cHost);
-        });
+        return argument(param, arg.getArgumentType(host)).suggests(SuggestionProviders.serverOnly((server, ctx, b) -> {
+            if (!(ctx.getSource().entity() instanceof ServerPlayer player))
+            {
+                throw error("Scarpet command suggestions require a server player");
+            }
+
+            CommandContext<CommandSourceStack> commandContext = withCommandSource(ctx, player.createCommandSourceStack());
+            CarpetScriptHost cHost = scriptServer.modules.get(hostName).retrieveOwnForExecution(commandContext.getSource());
+            return arg.suggest(commandContext, b, cHost);
+        }));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static CommandContext<CommandSourceStack> withCommandSource(CommandContext<?> context, CommandSourceStack source)
+    {
+        // Brigadier cannot rebind the source type. This copy is only used to read parsed arguments, never to execute nodes.
+        return ((CommandContext<CommandSourceStack>) context).copyFor(source);
     }
 
     protected String suffix;
@@ -466,25 +480,25 @@ public abstract class CommandArgument
 
     protected abstract Supplier<CommandArgument> factory(MinecraftServer server);
 
-    private static class StringArgument extends CommandArgument
+    private static class ScarpetStringArgument extends CommandArgument
     {
         private Set<String> validOptions = Collections.emptySet();
 
-        private StringArgument()
+        private ScarpetStringArgument()
         {
-            super("string", StringArgumentType.StringType.QUOTABLE_PHRASE.getExamples(), true);
+            super("string", StringArgument.string().getExamples(), true);
         }
 
         @Override
         public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
-            return StringArgumentType.string();
+            return StringArgument.string();
         }
 
         @Override
         public Value getValueFromContext(CommandContext<CommandSourceStack> context, String param) throws CommandSyntaxException
         {
-            String choseValue = StringArgumentType.getString(context, param);
+            String choseValue = StringArgument.getString(context, param);
             if (!caseSensitive)
             {
                 choseValue = choseValue.toLowerCase(Locale.ROOT);
@@ -522,23 +536,23 @@ public abstract class CommandArgument
         @Override
         protected Supplier<CommandArgument> factory(MinecraftServer server)
         {
-            return StringArgument::new;
+            return ScarpetStringArgument::new;
         }
     }
 
-    private static class WordArgument extends StringArgument
+    private static class WordArgument extends ScarpetStringArgument
     {
         private WordArgument()
         {
             super();
             suffix = "term";
-            examples = StringArgumentType.StringType.SINGLE_WORD.getExamples();
+            examples = StringArgument.word().getExamples();
         }
 
         @Override
         public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
-            return StringArgumentType.word();
+            return StringArgument.word();
         }
 
         @Override
@@ -548,19 +562,19 @@ public abstract class CommandArgument
         }
     }
 
-    private static class GreedyStringArgument extends StringArgument
+    private static class GreedyStringArgument extends ScarpetStringArgument
     {
         private GreedyStringArgument()
         {
             super();
             suffix = "text";
-            examples = StringArgumentType.StringType.GREEDY_PHRASE.getExamples();
+            examples = StringArgument.greedyString().getExamples();
         }
 
         @Override
         public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
-            return StringArgumentType.greedyString();
+            return StringArgument.greedyString();
         }
 
         @Override
@@ -570,27 +584,27 @@ public abstract class CommandArgument
         }
     }
 
-    private static class BlockPosArgument extends CommandArgument
+    private static class ScarpetBlockPosArgument extends CommandArgument
     {
         private boolean mustBeLoaded = false;
 
-        private BlockPosArgument()
+        private ScarpetBlockPosArgument()
         {
-            super("pos", net.minecraft.commands.arguments.coordinates.BlockPosArgument.blockPos().getExamples(), false);
+            super("pos", BlockPosArgument.blockPos().getExamples(), false);
         }
 
         @Override
         public ArgumentType<?> getArgumentType(CarpetScriptHost host)
         {
-            return net.minecraft.commands.arguments.coordinates.BlockPosArgument.blockPos();
+            return BlockPosArgument.blockPos();
         }
 
         @Override
         public Value getValueFromContext(CommandContext<CommandSourceStack> context, String param) throws CommandSyntaxException
         {
             BlockPos pos = mustBeLoaded
-                    ? net.minecraft.commands.arguments.coordinates.BlockPosArgument.getLoadedBlockPos(context, param)
-                    : net.minecraft.commands.arguments.coordinates.BlockPosArgument.getSpawnablePos(context, param);
+                    ? BlockPosArgument.getLoadedBlockPos(context, param)
+                    : BlockPosArgument.getSpawnablePos(context, param);
             return ValueConversions.of(pos);
         }
 
@@ -604,7 +618,7 @@ public abstract class CommandArgument
         @Override
         protected Supplier<CommandArgument> factory(MinecraftServer server)
         {
-            return BlockPosArgument::new;
+            return ScarpetBlockPosArgument::new;
         }
     }
 
@@ -644,14 +658,14 @@ public abstract class CommandArgument
         }
     }
 
-    private static class EntityArgument extends CommandArgument
+    private static class ScarpetEntityArgument extends CommandArgument
     {
         private boolean onlyFans;
         private boolean single;
 
-        private EntityArgument()
+        private ScarpetEntityArgument()
         {
-            super("entities", net.minecraft.commands.arguments.EntityArgument.entities().getExamples(), false);
+            super("entities", EntityArgument.entities().getExamples(), false);
             onlyFans = false;
             single = false;
         }
@@ -661,9 +675,9 @@ public abstract class CommandArgument
         {
             if (onlyFans)
             {
-                return single ? net.minecraft.commands.arguments.EntityArgument.player() : net.minecraft.commands.arguments.EntityArgument.players();
+                return single ? EntityArgument.player() : EntityArgument.players();
             }
-            return single ? net.minecraft.commands.arguments.EntityArgument.entity() : net.minecraft.commands.arguments.EntityArgument.entities();
+            return single ? EntityArgument.entity() : EntityArgument.entities();
         }
 
         @Override
@@ -696,7 +710,7 @@ public abstract class CommandArgument
         @Override
         protected Supplier<CommandArgument> factory(MinecraftServer server)
         {
-            return EntityArgument::new;
+            return ScarpetEntityArgument::new;
         }
     }
 
@@ -770,7 +784,7 @@ public abstract class CommandArgument
         @Override
         protected Value getValueFromContext(CommandContext<CommandSourceStack> context, String param) throws CommandSyntaxException
         {
-            Collection<ScoreHolder> holders = ScoreHolderArgument.getNames(context, param);
+            Collection<? extends ScoreHolder> holders = ScoreHolderArgument.getNames(context, param, ScoreHolderArgument.EMPTY_WILDCARD);
             if (!single)
             {
                 return ListValue.wrap(holders.stream().map(ValueConversions::of));
@@ -894,7 +908,7 @@ public abstract class CommandArgument
 
         private FloatArgument()
         {
-            super("float", DoubleArgumentType.doubleArg().getExamples(), true);
+            super("float", DoubleArgument.doubleArg().getExamples(), true);
         }
 
         @Override
@@ -904,17 +918,17 @@ public abstract class CommandArgument
             {
                 if (max != null)
                 {
-                    return DoubleArgumentType.doubleArg(min, max);
+                    return DoubleArgument.doubleArg(min, max);
                 }
-                return DoubleArgumentType.doubleArg(min);
+                return DoubleArgument.doubleArg(min);
             }
-            return DoubleArgumentType.doubleArg();
+            return DoubleArgument.doubleArg();
         }
 
         @Override
         public Value getValueFromContext(CommandContext<CommandSourceStack> context, String param)
         {
-            return new NumericValue(DoubleArgumentType.getDouble(context, param));
+            return new NumericValue(DoubleArgument.getDouble(context, param));
         }
 
         @Override
@@ -949,7 +963,7 @@ public abstract class CommandArgument
 
         private IntArgument()
         {
-            super("int", LongArgumentType.longArg().getExamples(), true);
+            super("int", LongArgument.longArg().getExamples(), true);
         }
 
         @Override
@@ -959,17 +973,17 @@ public abstract class CommandArgument
             {
                 if (max != null)
                 {
-                    return LongArgumentType.longArg(min, max);
+                    return LongArgument.longArg(min, max);
                 }
-                return LongArgumentType.longArg(min);
+                return LongArgument.longArg(min);
             }
-            return LongArgumentType.longArg();
+            return LongArgument.longArg();
         }
 
         @Override
         public Value getValueFromContext(CommandContext<CommandSourceStack> context, String param)
         {
-            return new NumericValue(LongArgumentType.getLong(context, param));
+            return new NumericValue(LongArgument.getLong(context, param));
         }
 
         @Override
@@ -1159,16 +1173,9 @@ public abstract class CommandArgument
         ArgumentType<?> get() throws CommandSyntaxException;
     }
 
-    @FunctionalInterface
-    private interface ArgumentProviderEx
-    {
-        ArgumentType<?> get(CommandBuildContext regAccess) throws CommandSyntaxException;
-    }
-
     public static class VanillaUnconfigurableArgument extends CommandArgument
     {
         private final ArgumentProvider argumentTypeSupplier;
-        private final ArgumentProviderEx argumentTypeSupplierEx;
         private final ValueExtractor valueExtractor;
         private final boolean providesExamples;
 
@@ -1191,7 +1198,6 @@ public abstract class CommandArgument
             this.providesExamples = suggestFromExamples;
             this.argumentTypeSupplier = argumentTypeSupplier;
             this.valueExtractor = valueExtractor;
-            this.argumentTypeSupplierEx = null;
         }
 
         public VanillaUnconfigurableArgument(
@@ -1206,60 +1212,6 @@ public abstract class CommandArgument
             this.providesExamples = false;
             this.argumentTypeSupplier = argumentTypeSupplier;
             this.valueExtractor = valueExtractor;
-            this.argumentTypeSupplierEx = null;
-        }
-
-        public VanillaUnconfigurableArgument(
-                String suffix,
-                ArgumentProviderEx argumentTypeSupplier,
-                ValueExtractor valueExtractor,
-                boolean suggestFromExamples,
-                MinecraftServer server)
-        {
-            super(suffix, null, suggestFromExamples);
-            try
-            {
-                CommandBuildContext context = CommandBuildContext.simple(server.registryAccess(), server.getWorldData().enabledFeatures());
-                this.examples = argumentTypeSupplier.get(context).getExamples();
-            }
-            catch (CommandSyntaxException e)
-            {
-                this.examples = Collections.emptyList();
-            }
-            this.providesExamples = suggestFromExamples;
-            this.argumentTypeSupplierEx = argumentTypeSupplier;
-            this.valueExtractor = valueExtractor;
-            this.argumentTypeSupplier = null;
-        }
-
-        public VanillaUnconfigurableArgument(
-                String suffix,
-                ArgumentProviderEx argumentTypeSupplier,
-                ValueExtractor valueExtractor,
-                SuggestionProvider<CommandSourceStack> suggester
-        )
-        {
-            super(suffix, Collections.emptyList(), false);
-            this.suggestionProvider = param -> suggester;
-            this.providesExamples = false;
-            this.argumentTypeSupplierEx = argumentTypeSupplier;
-            this.valueExtractor = valueExtractor;
-            this.argumentTypeSupplier = null;
-        }
-
-        public VanillaUnconfigurableArgument(
-                String suffix,
-                ArgumentProviderEx argumentTypeSupplier,
-                ValueExtractor valueExtractor,
-                Function<String, SuggestionProvider<CommandSourceStack>> suggesterGen
-        )
-        {
-            super(suffix, Collections.emptyList(), false);
-            this.suggestionProvider = suggesterGen;
-            this.providesExamples = false;
-            this.argumentTypeSupplierEx = argumentTypeSupplier;
-            this.valueExtractor = valueExtractor;
-            this.argumentTypeSupplier = null;
         }
 
         public <T> VanillaUnconfigurableArgument(
@@ -1269,18 +1221,16 @@ public abstract class CommandArgument
         {
             this(
                     suffix,
-                    c -> ResourceArgument.resource(c, registry),
+                    () -> ResourceArgument.resource(registry),
                     (c, p) -> ValueConversions.of(ResourceArgument.getResource(c, p, registry).key()),
-                    (c, b) -> SharedSuggestionProvider.suggestResource(c.getSource().getServer().registryAccess().lookupOrThrow(registry).keySet(), b)
+                    false
             );
         }
 
         @Override
         protected ArgumentType<?> getArgumentType(CarpetScriptHost host) throws CommandSyntaxException
         {
-            return argumentTypeSupplier != null
-                    ? argumentTypeSupplier.get()
-                    : argumentTypeSupplierEx.get(CommandBuildContext.simple(host.scriptServer().server.registryAccess(), host.scriptServer().server.getWorldData().enabledFeatures()));
+            return argumentTypeSupplier.get();
         }
 
         @Override
@@ -1292,9 +1242,7 @@ public abstract class CommandArgument
         @Override
         protected Supplier<CommandArgument> factory(MinecraftServer server)
         {
-            return argumentTypeSupplier != null
-                    ? () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples)
-                    : () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplierEx, valueExtractor, providesExamples, server);
+            return () -> new VanillaUnconfigurableArgument(getTypeSuffix(), argumentTypeSupplier, valueExtractor, providesExamples);
         }
     }
 }

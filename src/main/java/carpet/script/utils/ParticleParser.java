@@ -2,8 +2,8 @@ package carpet.script.utils;
 
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.commands.ParseContext;
 import net.minecraft.commands.arguments.ParticleArgument;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 
 import org.jspecify.annotations.Nullable;
@@ -14,11 +14,11 @@ public class ParticleParser
 {
     private static final Map<String, ParticleOptions> particleCache = new HashMap<>(); // we reset this on reloads, but probably need something better
 
-    private static ParticleOptions parseParticle(String name, RegistryAccess lookup)
+    private static ParticleOptions parseParticle(String name, ParseContext context)
     {
         try
         {
-            return ParticleArgument.readParticle(new StringReader(name), lookup);
+            return ParticleArgument.particle().parse(new StringReader(name), context);
         }
         catch (CommandSyntaxException e)
         {
@@ -26,13 +26,13 @@ public class ParticleParser
         }
     }
 
-    public static @Nullable ParticleOptions getEffect(@Nullable String name, RegistryAccess lookup)
+    public static @Nullable ParticleOptions getEffect(@Nullable String name, ParseContext context)
     {
         if (name == null)
         {
             return null;
         }
-        return particleCache.computeIfAbsent(name, particle -> parseParticle(particle, lookup));
+        return particleCache.computeIfAbsent(name, particle -> parseParticle(particle, context));
     }
 
     public static void resetCache()

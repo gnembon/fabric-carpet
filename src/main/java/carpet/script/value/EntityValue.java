@@ -12,6 +12,7 @@ import carpet.script.utils.EntityTools;
 import carpet.script.utils.InputValidator;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.commands.CommandPermissionLevels;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.selector.EntitySelector;
@@ -608,19 +609,19 @@ public class EntityValue extends Value
         put("permission_level", (e, a) -> {
             if (e instanceof ServerPlayer spe)
             {
-                if (Commands.LEVEL_OWNERS.check(spe.permissions()))
+                if (CommandPermissionLevels.LEVEL_OWNERS.check(spe.permissions()))
                 {
                     return new NumericValue(4);
                 }
-                if (Commands.LEVEL_ADMINS.check(spe.permissions()))
+                if (CommandPermissionLevels.LEVEL_ADMINS.check(spe.permissions()))
                 {
                     return new NumericValue(3);
                 }
-                if (Commands.LEVEL_GAMEMASTERS.check(spe.permissions()))
+                if (CommandPermissionLevels.LEVEL_GAMEMASTERS.check(spe.permissions()))
                 {
                     return new NumericValue(2);
                 }
-                if (Commands.LEVEL_MODERATORS.check(spe.permissions()))
+                if (CommandPermissionLevels.LEVEL_MODERATORS.check(spe.permissions()))
                 {
                     return new NumericValue(1);
                 }

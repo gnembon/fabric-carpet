@@ -14,12 +14,14 @@ import carpet.script.value.Value;
 import carpet.utils.CommandHelper;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.commands.CommandResultCallback;
 import net.minecraft.commands.CommandSigningContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.core.BlockPos;
@@ -33,6 +35,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.permissions.PermissionSet;
+import net.minecraft.server.permissions.PermissionProviderCheck;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.TaskChainer;
 import net.minecraft.world.Container;
@@ -57,10 +60,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
-import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
-import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.storage.LevelStorageSource;
-import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
@@ -68,7 +68,6 @@ import net.minecraft.world.scores.criteria.ObjectiveCriteria;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
@@ -272,9 +271,28 @@ public class Vanilla
         return ((AbstractContainerMenuInterface) handler).getDataSlot(index);
     }
 
-    public static void CommandDispatcher_unregisterCommand(CommandDispatcher<CommandSourceStack> dispatcher, String name)
+    public static CommandDispatcher<CommandSourceStack> Commands_getDispatcher(Commands commands)
     {
+        return ((CommandsInterface) commands).carpet$getDispatcher();
+    }
+
+    /**
+     * Registers and refreshes server-side command trees immediately. The caller must notify players separately.
+     */
+    public static void Commands_registerCommand(Commands commands, LiteralArgumentBuilder<CommandSourceStack> command)
+    {
+        Commands_getDispatcher(commands).register(command);
+        ((CommandsInterface) commands).carpet$refreshCommandTrees();
+    }
+
+    /**
+     * Removes a root command and refreshes both trees. The caller must notify players separately.
+     */
+    public static void Commands_unregisterCommand(Commands commands, String name)
+    {
+        CommandDispatcher<CommandSourceStack> dispatcher = Commands_getDispatcher(commands);
         ((CommandDispatcherInterface) dispatcher).carpet$unregister(name);
+        ((CommandsInterface) commands).carpet$refreshCommandTrees();
     }
 
     public static boolean MinecraftServer_doScriptsAutoload(MinecraftServer server)
@@ -297,14 +315,14 @@ public class Vanilla
         return CarpetSettings.scriptsDebugging;
     }
 
-    public static boolean ServerPlayer_canScriptACE(CommandSourceStack player)
+    public static PermissionProviderCheck<CommandSourceStack> Commands_scriptACEPermission()
     {
-        return CommandHelper.canUseCommand(player, CarpetSettings.commandScriptACE);
+        return CommandHelper.commandPermission(() -> CarpetSettings.commandScriptACE);
     }
 
-    public static boolean ServerPlayer_canScriptGeneral(CommandSourceStack player)
+    public static PermissionProviderCheck<CommandSourceStack> Commands_scriptGeneralPermission()
     {
-        return CommandHelper.canUseCommand(player, CarpetSettings.commandScript);
+        return CommandHelper.commandPermission(() -> CarpetSettings.commandScript);
     }
 
     public static int PoiRecord_getFreeTickets(PoiRecord record)

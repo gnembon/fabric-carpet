@@ -1,5 +1,8 @@
 // Scarpet tests are destructive: load this app in a disposable overworld.
 // Use /tests runall or /tests run <name>; single-test names are suggested without spaces.
+// Runs start on the next server tick so nested run() calls complete before their results are checked.
+// /tests argument <type> <value> echoes a parsed command argument, e.g. /tests argument pos 10 64 -20.
+// /tests run argument_int checks one argument type; runall includes every built-in argument type.
 // Visual draw_shape cases use nearby player-relative positions, separate from the destructive fixtures.
 // A single selected case is centered 6 blocks ahead; runall keeps every case in a compact gallery.
 // Face an open area: gallery specimens are spaced 8 blocks apart and expire after 6000 ticks.
@@ -7,17 +10,25 @@
 // Walk around to inspect them with a Carpet client; passes confirm API calls, not rendering.
 // The gallery does not modify terrain or follow the player. Vanilla particles are not equivalent.
 
-__config() -> {
-    'scope' -> 'player',
-    'command_permission' -> 'players',
-    'commands' -> {
+import('tests_arguments', 'argument_types', 'argument_echo', 'argument_tests');
+
+__config() -> (
+    commands = {
         'runall' -> 'runall',
         'run <name>' -> 'run_test'
-    },
-    'arguments' -> {
-        'name' -> {'type' -> 'term', 'suggester' -> _(args) -> _test_names()}
+    };
+    for(argument_types(),
+        put(commands, 'argument ' + _ + ' <value_' + _ + '>', 'argument_echo')
+    );
+    {
+        'scope' -> 'player',
+        'command_permission' -> 'players',
+        'commands' -> commands,
+        'arguments' -> {
+            'name' -> {'type' -> 'term', 'suggester' -> _(args) -> _test_names()}
+        }
     }
-};
+);
 
 import('tests_language', 'language_tests');
 import('tests_world', 'world_tests');
@@ -34,6 +45,7 @@ _suites(p, origin) -> (
     inventory_origin = [origin:0 + 16, y, origin:2];
     auxiliary_origin = [origin:0 + 24, y, origin:2];
     [
+        ['arguments', _() -> argument_tests()],
         ['language', _() -> language_tests()],
         ['world', _(outer(origin)) -> world_tests(origin)],
         ['entities', _(outer(p), outer(entity_origin)) -> entity_tests(p, entity_origin)],
@@ -143,5 +155,5 @@ _run_tests(wanted) -> (
     if(failed == 0, 1, 0)
 );
 
-runall() -> _run_tests(null);
-run_test(name) -> _run_tests(name);
+runall() -> (schedule(1, '_run_tests', null); 1);
+run_test(name) -> (schedule(1, '_run_tests', name); 1);

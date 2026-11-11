@@ -135,8 +135,16 @@ public class ValueConversions
 
     public static Value of(ParticleOptions particle, RegistryAccess regs)
     {
-        String repr = ParticleTypes.CODEC.encodeStart(regs.createSerializationContext(NbtOps.INSTANCE), particle).toString();
-        return StringValue.of(repr.startsWith("minecraft:") ? repr.substring(10) : repr);
+        var encoded = ParticleTypes.CODEC.encodeStart(regs.createSerializationContext(NbtOps.INSTANCE), particle)
+                .getOrThrow(error -> new InternalExpressionException("Failed to serialize particle: " + error));
+        if (!(encoded instanceof CompoundTag options))
+        {
+            throw new InternalExpressionException("Particle serialization did not produce a compound tag");
+        }
+        String type = options.getString("type")
+                .orElseThrow(() -> new InternalExpressionException("Particle serialization did not include a type"));
+        options.remove("type");
+        return StringValue.of(simplify(Identifier.parse(type)) + (options.isEmpty() ? "" : options.toString()));
     }
 
     public static Value ofRGB(int value)

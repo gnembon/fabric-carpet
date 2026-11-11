@@ -7,8 +7,6 @@ import com.google.common.collect.Lists;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -18,6 +16,8 @@ import java.util.function.Predicate;
 
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.IntegerArgument;
+import net.minecraft.commands.arguments.StringArgument;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.commands.arguments.blocks.BlockPredicateArgument;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
@@ -31,53 +31,53 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import java.lang.Math;
 
+import static net.minecraft.commands.suggestions.SuggestLiteralString.suggestLiteral;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
-import static net.minecraft.commands.SharedSuggestionProvider.suggest;
 
 public class DrawCommand
 {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, final CommandBuildContext context)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("draw").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandDraw)).
+                requires(CommandHelper.commandPermission(() -> CarpetSettings.commandDraw)).
                 then(literal("sphere").
                         then(argument("center", BlockPosArgument.blockPos()).
-                                then(argument("radius", IntegerArgumentType.integer(1)).
+                                then(argument("radius", IntegerArgument.integer(1)).
                                         then(drawShape(c -> DrawCommand.drawSphere(c, false), context))))).
                 then(literal("ball").
                         then(argument("center", BlockPosArgument.blockPos()).
-                                then(argument("radius", IntegerArgumentType.integer(1)).
+                                then(argument("radius", IntegerArgument.integer(1)).
                                         then(drawShape(c -> DrawCommand.drawSphere(c, true), context))))).
                 then(literal("diamond").
                         then(argument("center", BlockPosArgument.blockPos()).
-                                then(argument("radius", IntegerArgumentType.integer(1)).
+                                then(argument("radius", IntegerArgument.integer(1)).
                                         then(drawShape(c -> DrawCommand.drawDiamond(c, true), context))))).
                 then(literal("pyramid").
                         then(argument("center", BlockPosArgument.blockPos()).
-                                then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(argument("height",IntegerArgumentType.integer(1)).
-                                                then(argument("pointing",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"up","down"},b)).
-                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b)).
+                                then(argument("radius", IntegerArgument.integer(1)).
+                                        then(argument("height",IntegerArgument.integer(1)).
+                                                then(argument("pointing",StringArgument.word()).suggests(suggestLiteral("up","down")).
+                                                        then(argument("orientation",StringArgument.word()).suggests(suggestLiteral("y","x","z")).
                                                                 then(drawShape(c -> DrawCommand.drawPyramid(c, "square", true), context)))))))).
                 then(literal("cone").
                         then(argument("center", BlockPosArgument.blockPos()).
-                                then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(argument("height",IntegerArgumentType.integer(1)).
-                                                then(argument("pointing",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"up","down"},b)).
-                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b))
+                                then(argument("radius", IntegerArgument.integer(1)).
+                                        then(argument("height",IntegerArgument.integer(1)).
+                                                then(argument("pointing",StringArgument.word()).suggests(suggestLiteral("up","down")).
+                                                        then(argument("orientation",StringArgument.word()).suggests(suggestLiteral("y","x","z"))
                                                                 .then(drawShape(c -> DrawCommand.drawPyramid(c, "circle", true), context)))))))).
                 then(literal("cylinder").
                         then(argument("center", BlockPosArgument.blockPos()).
-                                then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(argument("height",IntegerArgumentType.integer(1)).
-                                                        then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b))
+                                then(argument("radius", IntegerArgument.integer(1)).
+                                        then(argument("height",IntegerArgument.integer(1)).
+                                                        then(argument("orientation",StringArgument.word()).suggests(suggestLiteral("y","x","z"))
                                                                 .then(drawShape(c -> DrawCommand.drawPrism(c, "circle"), context))))))).
                 then(literal("cuboid").
                         then(argument("center", BlockPosArgument.blockPos()).
-                                then(argument("radius", IntegerArgumentType.integer(1)).
-                                        then(argument("height",IntegerArgumentType.integer(1)).
-                                                then(argument("orientation",StringArgumentType.word()).suggests( (c, b) -> suggest(new String[]{"y","x","z"},b))
+                                then(argument("radius", IntegerArgument.integer(1)).
+                                        then(argument("height",IntegerArgument.integer(1)).
+                                                then(argument("orientation",StringArgument.word()).suggests(suggestLiteral("y","x","z"))
                                                         .then(drawShape(c -> DrawCommand.drawPrism(c, "square"), context)))))));
         dispatcher.register(command);
     }
@@ -91,10 +91,10 @@ public class DrawCommand
     private static RequiredArgumentBuilder<CommandSourceStack, BlockInput>
     drawShape(Command<CommandSourceStack> drawer, CommandBuildContext commandBuildContext)
     {
-        return argument("block", BlockStateArgument.block(commandBuildContext)).
+        return argument("block", BlockStateArgument.block()).
                 executes(drawer)
                 .then(literal("replace")
-                        .then(argument("filter", BlockPredicateArgument.blockPredicate(commandBuildContext))
+                        .then(argument("filter", BlockPredicateArgument.blockPredicate())
                                 .executes(drawer)));
     }
 
@@ -160,7 +160,7 @@ public class DrawCommand
         try
         {
             pos = getArg(ctx, BlockPosArgument::getSpawnablePos, "center");
-            radius = getArg(ctx, IntegerArgumentType::getInteger, "radius");
+            radius = getArg(ctx, IntegerArgument::getInteger, "radius");
             block = getArg(ctx, BlockStateArgument::getBlock, "block");
             replacement = getArg(ctx, BlockPredicateArgument::getBlockPredicate, "filter", true);
         }
@@ -255,7 +255,7 @@ public class DrawCommand
         try
         {
             pos = getArg(ctx, BlockPosArgument::getSpawnablePos, "center");
-            radius = getArg(ctx, IntegerArgumentType::getInteger, "radius");
+            radius = getArg(ctx, IntegerArgument::getInteger, "radius");
             block = getArg(ctx, BlockStateArgument::getBlock, "block");
             replacement = getArg(ctx, BlockPredicateArgument::getBlockPredicate, "filter", true);
         }
@@ -355,10 +355,10 @@ public class DrawCommand
         try
         {
             pos = getArg(ctx, BlockPosArgument::getSpawnablePos, "center");
-            radius = getArg(ctx, IntegerArgumentType::getInteger, "radius")+0.5D;
-            height = getArg(ctx, IntegerArgumentType::getInteger, "height");
-            pointup = getArg(ctx, StringArgumentType::getString, "pointing").equalsIgnoreCase("up");
-            orientation = getArg(ctx, StringArgumentType::getString,"orientation");
+            radius = getArg(ctx, IntegerArgument::getInteger, "radius")+0.5D;
+            height = getArg(ctx, IntegerArgument::getInteger, "height");
+            pointup = getArg(ctx, StringArgument::getString, "pointing").equalsIgnoreCase("up");
+            orientation = getArg(ctx, StringArgument::getString,"orientation");
             block = getArg(ctx, BlockStateArgument::getBlock, "block");
             replacement = getArg(ctx, BlockPredicateArgument::getBlockPredicate, "filter", true);
         }
@@ -408,9 +408,9 @@ public class DrawCommand
         try
         {
             pos = getArg(ctx, BlockPosArgument::getSpawnablePos, "center");
-            radius = getArg(ctx, IntegerArgumentType::getInteger, "radius")+0.5D;
-            height = getArg(ctx, IntegerArgumentType::getInteger, "height");
-            orientation = getArg(ctx, StringArgumentType::getString,"orientation");
+            radius = getArg(ctx, IntegerArgument::getInteger, "radius")+0.5D;
+            height = getArg(ctx, IntegerArgument::getInteger, "height");
+            orientation = getArg(ctx, StringArgument::getString,"orientation");
             block = getArg(ctx, BlockStateArgument::getBlock, "block");
             replacement = getArg(ctx, BlockPredicateArgument::getBlockPredicate, "filter", true);
         }

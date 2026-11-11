@@ -6,7 +6,6 @@ import carpet.logging.LoggerRegistry;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import java.util.ArrayList;
@@ -18,46 +17,48 @@ import java.util.Map;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.StringArgument;
 import net.minecraft.world.entity.player.Player;
 import java.util.Arrays;
 
-import static com.mojang.brigadier.arguments.StringArgumentType.getString;
-import static net.minecraft.commands.SharedSuggestionProvider.suggest;
+import static net.minecraft.commands.suggestions.SuggestionProviders.serverOnly;
+import static net.minecraft.commands.arguments.StringArgument.getString;
+import static net.minecraft.commands.suggestions.SuggestionContext.suggest;
 
 public class LogCommand
 {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = Commands.literal("log").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandLog)).
+                requires(CommandHelper.commandPermission(() -> CarpetSettings.commandLog)).
                 executes((context) -> listLogs(context.getSource())).
                 then(Commands.literal("clear").
                         executes( (c) -> unsubFromAll(c.getSource(), c.getSource().getTextName())).
-                        then(Commands.argument("player", StringArgumentType.word()).
-                                suggests( (c, b)-> suggest(c.getSource().getOnlinePlayerNames(),b)).
+                        then(Commands.argument("player", StringArgument.word()).
+                                suggests(serverOnly( (server, c, b)-> suggest(server.getPlayerNames(),b))).
                                 executes( (c) -> unsubFromAll(c.getSource(), getString(c, "player")))));
 
-        literalargumentbuilder.then(Commands.argument("log name",StringArgumentType.word()).
-                suggests( (c, b)-> suggest(LoggerRegistry.getLoggerNames(),b)).
+        literalargumentbuilder.then(Commands.argument("log name",StringArgument.word()).
+                suggests(serverOnly( (server, c, b)-> suggest(LoggerRegistry.getLoggerNames(),b))).
                 executes( (c)-> toggleSubscription(c.getSource(), c.getSource().getTextName(), getString(c, "log name"))).
                 then(Commands.literal("clear").
                         executes( (c) -> unsubFromLogger(
                                 c.getSource(),
                                 c.getSource().getTextName(),
                                 getString(c, "log name")))).
-                then(Commands.argument("option", StringArgumentType.string()).
-                        suggests( (c, b) -> suggest(
+                then(Commands.argument("option", StringArgument.string()).
+                        suggests(serverOnly( (server, c, b) -> suggest(
                                 (LoggerRegistry.getLogger(getString(c, "log name"))==null
                                         ?new String[]{}
                                         :LoggerRegistry.getLogger(getString(c, "log name")).getOptions()),
-                                b)).
+                                b))).
                         executes( (c) -> subscribePlayer(
                                 c.getSource(),
                                 c.getSource().getTextName(),
                                 getString(c, "log name"),
                                 getString(c, "option"))).
-                        then(Commands.argument("player", StringArgumentType.word()).
-                                suggests( (c, b) -> suggest(c.getSource().getOnlinePlayerNames(),b)).
+                        then(Commands.argument("player", StringArgument.word()).
+                                suggests(serverOnly( (server, c, b) -> suggest(server.getPlayerNames(),b))).
                                 executes( (c) -> subscribePlayer(
                                         c.getSource(),
                                         getString(c, "player"),

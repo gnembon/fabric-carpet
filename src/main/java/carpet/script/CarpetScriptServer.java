@@ -23,7 +23,9 @@ import carpet.script.value.FunctionValue;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 
+import net.minecraft.commands.CommandPermissionLevels;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -108,9 +110,10 @@ public class CarpetScriptServer extends ScriptServer
         registerBuiltInApp(Module.carpetNative("ai_tracker", false));
         registerBuiltInApp(Module.carpetNative("draw_beta", false));
         registerBuiltInApp(Module.carpetNative("shapes", true));
-        //registerBuiltInApp(Module.carpetNative("sctest", false));
+        registerBuiltInApp(Module.carpetNative("sctest", false));
         registerBuiltInApp(Module.carpetNative("distance_beta", false));
         registerBuiltInApp(Module.carpetNative("tests", false));
+        registerBuiltInApp(Module.carpetNative("tests_arguments", true));
         registerBuiltInApp(Module.carpetNative("tests_language", true));
         registerBuiltInApp(Module.carpetNative("tests_world", true));
         registerBuiltInApp(Module.carpetNative("tests_entities", true));
@@ -132,7 +135,7 @@ public class CarpetScriptServer extends ScriptServer
         unloadableModules = new HashSet<>();
         tickStart = 0L;
         stopAll = false;
-        holyMoly = server.getCommands().getDispatcher().getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
+        holyMoly = Vanilla.Commands_getDispatcher(server.getCommands()).getRoot().getChildren().stream().map(CommandNode::getName).collect(Collectors.toSet());
         globalHost = CarpetScriptHost.create(this, null, false, null, p -> true, false, null, Expression.LoadOverride.DEFAULT);
     }
 
@@ -297,7 +300,7 @@ public class CarpetScriptServer extends ScriptServer
         Runnable token = Carpet.startProfilerSection("Scarpet load");
         if (commandValidator == null)
         {
-            commandValidator = p -> true;
+            commandValidator = Commands.hasPermission(CommandPermissionLevels.LEVEL_ALL);
         }
         long start = System.nanoTime();
         name = name.toLowerCase(Locale.ROOT);
@@ -415,7 +418,7 @@ public class CarpetScriptServer extends ScriptServer
         host.onClose();
         if (host.hasCommand)
         {
-            Vanilla.CommandDispatcher_unregisterCommand(server.getCommands().getDispatcher(), name);
+            Vanilla.Commands_unregisterCommand(server.getCommands(), name);
         }
         if (!isRuleApp)
         {

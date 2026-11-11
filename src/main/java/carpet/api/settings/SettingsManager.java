@@ -28,7 +28,6 @@ import java.util.stream.Stream;
 import carpet.script.Expression;
 import com.google.common.collect.Sets;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -50,16 +49,18 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.arguments.StringArgument;
+import net.minecraft.commands.suggestions.SuggestionContext;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 
+import static net.minecraft.commands.suggestions.SuggestionProviders.serverOnly;
 import static carpet.utils.Translations.tr;
 import static java.util.Comparator.comparing;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
-import static net.minecraft.commands.SharedSuggestionProvider.suggest;
+import static net.minecraft.commands.suggestions.SuggestionContext.suggest;
 
 /**
  * <p>A {@link SettingsManager} is a class that manages {@link CarpetRule carpet rules} in a {@link MinecraftServer},
@@ -332,7 +333,7 @@ public class SettingsManager {
         {
             if (RuleHelper.getBooleanValue(rule) || (rule.type() == String.class && !rule.value().equals("false")))
             {
-                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, s -> CommandHelper.canUseCommand(s, rule.value()), false, false, true, null, Expression.LoadOverride.DEFAULT);
+                CarpetServer.scriptServer.addScriptHost(source, rule.scarpetApp, CommandHelper.commandPermission(rule::value), false, false, true, null, Expression.LoadOverride.DEFAULT);
             } else {
                 CarpetServer.scriptServer.removeScriptHost(source, rule.scarpetApp, false, true);
             }
@@ -555,9 +556,9 @@ public class SettingsManager {
         return 1;
     }
 
-    private CarpetRule<?> contextRule(CommandContext<CommandSourceStack> ctx) throws CommandSyntaxException
+    private CarpetRule<?> contextRule(CommandContext<?> ctx) throws CommandSyntaxException
     {
-        String ruleName = StringArgumentType.getString(ctx, "rule");
+        String ruleName = StringArgument.getString(ctx, "rule");
         CarpetRule<?> rule = getCarpetRule(ruleName);
         if (rule == null)
             throw new SimpleCommandExceptionType(Messenger.c("rb "+ tr(TranslationKeys.UNKNOWN_RULE) + ": "+ruleName)).create();
@@ -578,7 +579,7 @@ public class SettingsManager {
                 smartSuggestionList.add(listItem);
             }
             // Regular prefix matching, reference: CommandSource.suggestMatching
-            if (SharedSuggestionProvider.matchesSubStr(query, listItem.toLowerCase(Locale.ROOT))) {
+            if (SuggestionContext.matchesSubStr(query, listItem.toLowerCase(Locale.ROOT))) {
                 regularSuggestionList.add(listItem);
             }
         });
@@ -602,8 +603,9 @@ public class SettingsManager {
             return;
         }
 
-        LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal(identifier).requires((player) ->
-                CommandHelper.canUseCommand(player, CarpetSettings.carpetCommandPermissionLevel) && !locked());
+        LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal(identifier).requires(CommandHelper.andRequirements(
+                CommandHelper.commandPermission(() -> CarpetSettings.carpetCommandPermissionLevel),
+                CommandHelper.requireCondition(() -> !locked())));
 
         literalargumentbuilder.executes((context)-> listAllSettings(context.getSource())).
                 then(literal("list").
@@ -613,30 +615,30 @@ public class SettingsManager {
                                 executes( (c)-> listSettings(c.getSource(),
                                         String.format(tr(TranslationKeys.CURRENT_FROM_FILE_HEADER), fancyName, (identifier+".conf")),
                                         findStartupOverrides()))).
-                        then(argument("tag",StringArgumentType.word()).
-                                suggests( (c, b)->suggest(getCategories(), b)).
+                        then(argument("tag",StringArgument.word()).
+                                suggests(serverOnly( (server, c, b)->suggest(getCategories(), b))).
                                 executes( (c) -> listSettings(c.getSource(),
-                                        String.format(tr(TranslationKeys.MOD_SETTINGS_MATCHING), fancyName, RuleHelper.translatedCategory(identifier(),StringArgumentType.getString(c, "tag"))),
-                                        getRulesMatching(StringArgumentType.getString(c, "tag")))))).
+                                        String.format(tr(TranslationKeys.MOD_SETTINGS_MATCHING), fancyName, RuleHelper.translatedCategory(identifier(),StringArgument.getString(c, "tag"))),
+                                        getRulesMatching(StringArgument.getString(c, "tag")))))).
                 then(literal("removeDefault").
-                        requires(s -> !locked()).
-                        then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(CarpetRule::name), b)).
+                        requires(CommandHelper.requireCondition(() -> !locked())).
+                        then(argument("rule", StringArgument.word()).
+                                suggests(serverOnly( (server, c, b) -> suggestMatchingContains(getRulesSorted().stream().map(CarpetRule::name), b))).
                                 executes((c) -> removeDefault(c.getSource(), contextRule(c))))).
                 then(literal("setDefault").
-                        requires(s -> !locked()).
-                        then(argument("rule", StringArgumentType.word()).
-                                suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(CarpetRule::name), b)).
-                                then(argument("value", StringArgumentType.greedyString()).
-                                        suggests((c, b)-> suggest(contextRule(c).suggestions(), b)).
-                                        executes((c) -> setDefault(c.getSource(), contextRule(c), StringArgumentType.getString(c, "value")))))).
-                then(argument("rule", StringArgumentType.word()).
-                        suggests( (c, b) -> suggestMatchingContains(getRulesSorted().stream().map(CarpetRule::name), b)).
-                        requires(s -> !locked() ).
+                        requires(CommandHelper.requireCondition(() -> !locked())).
+                        then(argument("rule", StringArgument.word()).
+                                suggests(serverOnly( (server, c, b) -> suggestMatchingContains(getRulesSorted().stream().map(CarpetRule::name), b))).
+                                requires(CommandHelper.requireCondition(() -> !locked())).
+                                then(argument("value", StringArgument.greedyString()).
+                                        suggests(serverOnly((server, c, b)-> suggest(contextRule(c).suggestions(), b))).
+                                        executes((c) -> setDefault(c.getSource(), contextRule(c), StringArgument.getString(c, "value")))))).
+                then(argument("rule", StringArgument.word()).
+                        suggests(serverOnly( (server, c, b) -> suggestMatchingContains(getRulesSorted().stream().map(CarpetRule::name), b))).
                         executes( (c) -> displayRuleMenu(c.getSource(), contextRule(c))).
-                        then(argument("value", StringArgumentType.greedyString()).
-                                suggests((c, b)-> suggest(contextRule(c).suggestions(),b)).
-                                executes((c) -> setRule(c.getSource(), contextRule(c), StringArgumentType.getString(c, "value")))));
+                        then(argument("value", StringArgument.greedyString()).
+                                suggests(serverOnly((server, c, b)-> suggest(contextRule(c).suggestions(),b))).
+                                executes((c) -> setRule(c.getSource(), contextRule(c), StringArgument.getString(c, "value")))));
 
         dispatcher.register(literalargumentbuilder);
     }

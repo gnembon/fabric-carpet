@@ -1112,8 +1112,7 @@ public class WorldAccess
 
             for (ServerPlayer serverPlayer : cc.level().players()) {
                 if (serverPlayer.distanceToSqr(pos) < 4096.0) {
-                    Optional<Vec3> optional = Optional.ofNullable((Vec3)serverExplosion.getHitPlayers().get(serverPlayer));
-                    serverPlayer.connection.send(new ClientboundExplodePacket(pos, powah, i, optional, Optional.of(particleOptions3), Optional.of(SoundEvents.GENERIC_EXPLODE), DEFAULT_EXPLOSION_BLOCK_PARTICLES));
+                    serverPlayer.connection.send(new ClientboundExplodePacket(pos, powah, i, Optional.of(particleOptions3), Optional.of(SoundEvents.GENERIC_EXPLODE), DEFAULT_EXPLOSION_BLOCK_PARTICLES));
                 }
             }
             return Value.TRUE;

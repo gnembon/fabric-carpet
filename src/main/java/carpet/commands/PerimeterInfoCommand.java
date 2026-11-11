@@ -9,7 +9,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
-import net.minecraft.commands.synchronization.SuggestionProviders;
+import net.minecraft.commands.suggestions.SuggestSummonableEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -29,7 +29,7 @@ public class PerimeterInfoCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("perimeterinfo").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPerimeterInfo)).
+                requires(CommandHelper.commandPermission(() -> CarpetSettings.commandPerimeterInfo)).
                 executes( (c) -> perimeterDiagnose(
                         c.getSource(),
                         BlockPos.containing(c.getSource().getPosition()),
@@ -39,8 +39,8 @@ public class PerimeterInfoCommand
                                 c.getSource(),
                                 BlockPosArgument.getSpawnablePos(c, "center position"),
                                 null)).
-                        then(argument("mob", resource(commandBuildContext, Registries.ENTITY_TYPE)).
-                                suggests(SuggestionProviders.cast(SuggestionProviders.SUMMONABLE_ENTITIES)).
+                        then(argument("mob", resource(Registries.ENTITY_TYPE)).
+                                suggests(SuggestSummonableEntities.suggestSummonableEntities()).
                                 executes( (c) -> perimeterDiagnose(
                                         c.getSource(),
                                         BlockPosArgument.getSpawnablePos(c, "center position"),

@@ -11,14 +11,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandPermissionLevels;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 
-import static com.mojang.brigadier.arguments.StringArgumentType.getString;
-import static com.mojang.brigadier.arguments.StringArgumentType.greedyString;
+import static net.minecraft.commands.arguments.StringArgument.getString;
+import static net.minecraft.commands.arguments.StringArgument.greedyString;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
@@ -27,7 +28,7 @@ public class InfoCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("info").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandInfo)).
+                requires(CommandHelper.commandPermission(() -> CarpetSettings.commandInfo)).
                 then(literal("block").
                         then(argument("block position", BlockPosArgument.blockPos()).
                                 executes( (c) -> infoBlock(
@@ -68,7 +69,7 @@ public class InfoCommand
 
     private static int infoBlock(CommandSourceStack source, BlockPos pos, String grep)
     {
-        if (!Commands.LEVEL_GAMEMASTERS.check(source.permissions())) {
+        if (!CommandPermissionLevels.LEVEL_GAMEMASTERS.check(source.permissions())) {
             //check id pos is loaded
             if (!source.getLevel().hasChunkAt(pos)) {
                 Messenger.m(source, "r Chunk is not loaded");

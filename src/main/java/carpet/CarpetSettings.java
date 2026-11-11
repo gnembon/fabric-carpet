@@ -11,6 +11,7 @@ import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.SemanticVersion;
+import net.minecraft.commands.CommandPermissionLevels;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.registries.Registries;
@@ -133,7 +134,7 @@ public class CarpetSettings
 
     private static class CarpetPermissionLevel extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
-            if (source == null || Commands.LEVEL_OWNERS.check(source.permissions()))
+            if (source == null || CommandPermissionLevels.LEVEL_OWNERS.check(source.permissions()))
                 return newValue;
             return null;
         }
@@ -433,10 +434,10 @@ public class CarpetSettings
         @Override
         public Integer validate(CommandSourceStack source, CarpetRule<Integer> currentRule, Integer newValue, String string) {
             if (newValue == 2) {
-                perfPermissionCheck = Commands.LEVEL_GAMEMASTERS;
+                perfPermissionCheck = CommandPermissionLevels.LEVEL_GAMEMASTERS;
 
             } else if (newValue == 4) {
-                perfPermissionCheck = Commands.LEVEL_OWNERS;
+                perfPermissionCheck = CommandPermissionLevels.LEVEL_OWNERS;
 
             }
             return newValue;
@@ -447,7 +448,7 @@ public class CarpetSettings
             return "You must have the permission level you are trying to set";
         }
     }
-    public static PermissionCheck perfPermissionCheck = Commands.LEVEL_OWNERS;
+    public static PermissionCheck perfPermissionCheck = CommandPermissionLevels.LEVEL_OWNERS;
 
 
     @Rule(desc = "Enables /log command to monitor events via chat and overlays", category = COMMAND)
@@ -500,11 +501,11 @@ public class CarpetSettings
     private static class ModulePermissionLevel extends Validator<String> {
         @Override public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             PermissionCheck permissionLevel = switch (newValue) {
-                    case "0", "false" -> Commands.LEVEL_ALL;
-                    case "1" -> Commands.LEVEL_MODERATORS;
-                    case "2", "true", "ops" -> Commands.LEVEL_GAMEMASTERS;
-                    case "3" -> Commands.LEVEL_ADMINS;
-                    case "4" -> Commands.LEVEL_OWNERS;
+                    case "0", "false" -> CommandPermissionLevels.LEVEL_ALL;
+                    case "1" -> CommandPermissionLevels.LEVEL_MODERATORS;
+                    case "2", "true", "ops" -> CommandPermissionLevels.LEVEL_GAMEMASTERS;
+                    case "3" -> CommandPermissionLevels.LEVEL_ADMINS;
+                    case "4" -> CommandPermissionLevels.LEVEL_OWNERS;
                     default -> throw new IllegalArgumentException(); // already checked by previous validator
             	};
             if (source != null && !permissionLevel.check(source.permissions()))
@@ -935,7 +936,7 @@ public class CarpetSettings
         @Override
         public String validate(CommandSourceStack source, CarpetRule<String> currentRule, String newValue, String string) {
             if (source == null) return newValue; // closing or sync
-            Optional<Block> ignoredBlock = source.registryAccess().lookupOrThrow(Registries.BLOCK).getOptional(Identifier.tryParse(newValue));
+            Optional<Block> ignoredBlock = source.getServer().registryAccess().lookupOrThrow(Registries.BLOCK).getOptional(Identifier.tryParse(newValue));
             if (!ignoredBlock.isPresent()) {
                 Messenger.m(source, "r Unknown block '" + newValue + "'.");
                 return null;

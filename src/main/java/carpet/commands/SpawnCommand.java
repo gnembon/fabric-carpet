@@ -7,7 +7,6 @@ import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
 import carpet.utils.SpawnReporter;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
@@ -19,6 +18,7 @@ import java.util.stream.Collectors;
 
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.BooleanArgument;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
 import net.minecraft.core.BlockPos;
@@ -28,21 +28,23 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
-import static com.mojang.brigadier.arguments.IntegerArgumentType.getInteger;
-import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
-import static com.mojang.brigadier.arguments.StringArgumentType.getString;
-import static com.mojang.brigadier.arguments.StringArgumentType.string;
-import static com.mojang.brigadier.arguments.StringArgumentType.word;
+import static net.minecraft.commands.suggestions.SuggestLiteralString.suggestLiteral;
+import static net.minecraft.commands.suggestions.SuggestionProviders.serverOnly;
+import static net.minecraft.commands.arguments.IntegerArgument.getInteger;
+import static net.minecraft.commands.arguments.IntegerArgument.integer;
+import static net.minecraft.commands.arguments.StringArgument.getString;
+import static net.minecraft.commands.arguments.StringArgument.string;
+import static net.minecraft.commands.arguments.StringArgument.word;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
-import static net.minecraft.commands.SharedSuggestionProvider.suggest;
+import static net.minecraft.commands.suggestions.SuggestionContext.suggest;
 
 public class SpawnCommand
 {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = literal("spawn").
-                requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandSpawn));
+                requires(CommandHelper.commandPermission(() -> CarpetSettings.commandSpawn));
 
         literalargumentbuilder.
                 then(literal("list").
@@ -62,7 +64,7 @@ public class SpawnCommand
                         then(literal("stop").
                                 executes( (c) -> stopTracking(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggest(Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName),b)).
+                                suggests(serverOnly( (server, c, b) -> suggest(Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName),b))).
                                 executes( (c) -> recentSpawnsForType(c.getSource(), getString(c, "type"))))).
                 then(literal("test").
                         executes( (c)-> runTest(c.getSource(), 72000, null)).
@@ -72,22 +74,22 @@ public class SpawnCommand
                                         getInteger(c, "ticks"),
                                         null)).
                                 then(argument("counter", word()).
-                                        suggests( (c, b) -> suggest(Arrays.stream(DyeColor.values()).map(DyeColor::toString),b)).
+                                        suggests(serverOnly( (server, c, b) -> suggest(Arrays.stream(DyeColor.values()).map(DyeColor::toString),b))).
                                         executes((c)-> runTest(
                                                 c.getSource(),
                                                 getInteger(c, "ticks"),
                                                 getString(c, "counter")))))).
                 then(literal("mocking").
-                        then(argument("to do or not to do?", BoolArgumentType.bool()).
-                            executes( (c) -> toggleMocking(c.getSource(), BoolArgumentType.getBool(c, "to do or not to do?"))))).
+                        then(argument("to do or not to do?", BooleanArgument.bool()).
+                            executes( (c) -> toggleMocking(c.getSource(), BooleanArgument.getBool(c, "to do or not to do?"))))).
                 then(literal("rates").
                         executes( (c) -> generalMobcaps(c.getSource())).
                         then(literal("reset").
                                 executes( (c) -> resetSpawnRates(c.getSource()))).
                         then(argument("type", word()).
-                                suggests( (c, b) -> suggest(Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName),b)).
+                                suggests(serverOnly( (server, c, b) -> suggest(Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName),b))).
                                 then(argument("rounds", integer(0)).
-                                        suggests( (c, b) -> suggest(new String[]{"1"},b)).
+                                        suggests(suggestLiteral("1")).
                                         executes( (c) -> setSpawnRates(
                                                 c.getSource(),
                                                 getString(c, "type"),
@@ -102,7 +104,7 @@ public class SpawnCommand
                 then(literal("entities").
                         executes( (c) -> generalMobcaps(c.getSource()) ).
                         then(argument("type", string()).
-                                suggests( (c, b)->suggest(Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName), b)).
+                                suggests(serverOnly( (server, c, b)->suggest(Arrays.stream(SpawnReporter.cachedMobCategories()).map(MobCategory::getName), b))).
                                 executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), false)).
                                 then(literal("all").executes( (c) -> listEntitiesOfType(c.getSource(), getString(c, "type"), true)))));
 

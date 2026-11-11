@@ -117,7 +117,7 @@ public class SettingsManager extends carpet.api.settings.SettingsManager
     @Deprecated(forRemoval = true)
     public void registerCommand(CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        final CommandBuildContext context = CommandBuildContext.simple(RegistryAccess.EMPTY, FeatureFlags.VANILLA_SET);
+        final CommandBuildContext context = CommandBuildContext.simple(FeatureFlags.VANILLA_SET);
         registerCommand(dispatcher, context);
     }
 }

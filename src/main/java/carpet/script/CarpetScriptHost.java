@@ -1,5 +1,7 @@
 package carpet.script;
 
+import carpet.helpers.CommandSourceRequirement;
+import carpet.utils.CommandHelper;
 import carpet.script.api.Auxiliary;
 import carpet.script.argument.FileArgument;
 import carpet.script.argument.FunctionArgument;
@@ -23,20 +25,22 @@ import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 
 import com.google.gson.JsonElement;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 
+import net.minecraft.commands.CommandPermissionLevels;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.StringArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionProviderCheck;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
 import org.apache.commons.lang3.tuple.Pair;
@@ -195,7 +199,7 @@ public class CarpetScriptHost extends ScriptHost
         String hostName = main.name();
         Predicate<CommandSourceStack> configValidator = getCommandConfigPermissions();
         LiteralArgumentBuilder<CommandSourceStack> command = literal(hostName).
-                requires((player) -> useValidator.test(player) && configValidator.test(player));
+                requires(CommandHelper.andRequirements(useValidator, configValidator));
         for (Pair<List<CommandToken>, FunctionArgument> commandData : entries)
         {
             command = this.addPathToCommand(command, commandData.getKey(), commandData.getValue());
@@ -203,15 +207,15 @@ public class CarpetScriptHost extends ScriptHost
         return command;
     }
 
-    private static boolean sourceHasPermissionLevel(CommandSourceStack source, int level) {
-        return switch (level) {
-            case 0 -> Commands.LEVEL_ALL.check(source.permissions());
-            case 1 -> Commands.LEVEL_MODERATORS.check(source.permissions());
-            case 2 -> Commands.LEVEL_GAMEMASTERS.check(source.permissions());
-            case 3 -> Commands.LEVEL_ADMINS.check(source.permissions());
-            case 4 -> Commands.LEVEL_OWNERS.check(source.permissions());
-            default -> false;
-        };
+    private static PermissionProviderCheck<CommandSourceStack> commandPermissionLevel(int level) {
+        return Commands.hasPermission(switch (level) {
+            case 0 -> CommandPermissionLevels.LEVEL_ALL;
+            case 1 -> CommandPermissionLevels.LEVEL_MODERATORS;
+            case 2 -> CommandPermissionLevels.LEVEL_GAMEMASTERS;
+            case 3 -> CommandPermissionLevels.LEVEL_ADMINS;
+            case 4 -> CommandPermissionLevels.LEVEL_OWNERS;
+            default -> throw new IllegalArgumentException("Invalid command permission level: " + level);
+        });
     }
 
     public Predicate<CommandSourceStack> getCommandConfigPermissions() throws CommandSyntaxException
@@ -219,7 +223,7 @@ public class CarpetScriptHost extends ScriptHost
         Value confValue = appConfig.get(StringValue.of("command_permission"));
         if (confValue == null)
         {
-            return s -> true;
+            return commandPermissionLevel(0);
         }
         if (confValue instanceof final NumericValue number)
         {
@@ -228,16 +232,16 @@ public class CarpetScriptHost extends ScriptHost
             {
                 throw CommandArgument.error("Numeric permission level for custom commands should be between 1 and 4");
             }
-            return s -> sourceHasPermissionLevel(s, level);
+            return commandPermissionLevel(level);
         }
         if (!(confValue instanceof final FunctionValue fun))
         {
             String perm = confValue.getString().toLowerCase(Locale.ROOT);
             return switch (perm) {
-                case "ops" -> s -> sourceHasPermissionLevel(s, 2);
-                case "server" -> s -> !(s.getEntity() instanceof ServerPlayer);
-                case "players" -> s -> s.getEntity() instanceof ServerPlayer;
-                case "all" -> s -> true;
+                case "ops" -> commandPermissionLevel(2);
+                case "server" -> new CommandSourceRequirement<>(s -> !(s.getEntity() instanceof ServerPlayer));
+                case "players" -> new CommandSourceRequirement<>(s -> s.getEntity() instanceof ServerPlayer);
+                case "all" -> commandPermissionLevel(0);
                 default -> throw CommandArgument.error("Unknown command permission: " + perm);
             };
         }
@@ -246,7 +250,7 @@ public class CarpetScriptHost extends ScriptHost
             throw CommandArgument.error("Custom command permission function should expect 1 argument");
         }
         String hostName = getName();
-        return s -> {
+        return new CommandSourceRequirement<>(s -> {
             try
             {
                 Runnable token = Carpet.startProfilerSection("Scarpet command");
@@ -263,7 +267,7 @@ public class CarpetScriptHost extends ScriptHost
                 Carpet.Messenger_message(s, "rb Unable to run app command: " + e.getMessage());
                 return false;
             }
-        };
+        });
     }
 
     @Override
@@ -407,7 +411,7 @@ public class CarpetScriptHost extends ScriptHost
     // Used to ensure app gets marked as holding command from a central place
     private void registerCommand(LiteralArgumentBuilder<CommandSourceStack> command)
     {
-        scriptServer().server.getCommands().getDispatcher().register(command);
+        Vanilla.Commands_registerCommand(scriptServer().server.getCommands(), command);
         hasCommand = true;
     }
 
@@ -520,7 +524,7 @@ public class CarpetScriptHost extends ScriptHost
         }
         String hostName = getName();
         LiteralArgumentBuilder<CommandSourceStack> command = literal(hostName).
-                requires((player) -> commandValidator.test(player) && configValidator.test(player)).
+                requires(CommandHelper.andRequirements(commandValidator, configValidator)).
                 executes((c) ->
                 {
                     CarpetScriptHost targetHost = scriptServer().modules.get(hostName).retrieveOwnForExecution(c.getSource());
@@ -556,7 +560,7 @@ public class CarpetScriptHost extends ScriptHost
             {
                 command = command.
                         then(literal(function).
-                                requires((player) -> scriptServer().modules.get(hostName).getFunction(function) != null).
+                                requires(CommandHelper.requireCondition(() -> scriptServer().modules.get(hostName).getFunction(function) != null)).
                                 executes((c) -> {
                                     CarpetScriptHost targetHost = scriptServer().modules.get(hostName).retrieveOwnForExecution(c.getSource());
                                     Value response = targetHost.handleCommandLegacy(c.getSource(), function, null, "");
@@ -566,10 +570,10 @@ public class CarpetScriptHost extends ScriptHost
                                     }
                                     return (int) response.readInteger();
                                 }).
-                                then(argument("args...", StringArgumentType.greedyString()).
+                                then(argument("args...", StringArgument.greedyString()).
                                         executes((c) -> {
                                             CarpetScriptHost targetHost = scriptServer().modules.get(hostName).retrieveOwnForExecution(c.getSource());
-                                            Value response = targetHost.handleCommandLegacy(c.getSource(), function, null, StringArgumentType.getString(c, "args..."));
+                                            Value response = targetHost.handleCommandLegacy(c.getSource(), function, null, StringArgument.getString(c, "args..."));
                                             if (!response.isNull())
                                             {
                                                 Carpet.Messenger_message(c.getSource(), "gi " + response.getString());

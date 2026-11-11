@@ -1,0 +1,131 @@
+global_argument_result = null;
+
+// Keep one entry for every key in CommandArgument.builtIns. Expectations run only inside a test,
+// not while building the command tree or suggesting test names without a player.
+_argument_specs() -> [
+    ['advancement', 'minecraft:story/root', _() -> 'story/root'],
+    ['anchor', 'eyes', _() -> 'EYES'],
+    ['attribute', 'minecraft:max_health', _() -> 'max_health'],
+    ['biome', 'minecraft:plains', _() -> 'plains'],
+    ['block', 'minecraft:stone', _() -> block('stone')],
+    ['blockpredicate', 'minecraft:stone', _() -> ['stone', null, {}, null]],
+    ['bool', 'false', _() -> false],
+    ['boss', 'scarpet_tests:argument_boss', _() -> 'scarpet_tests:argument_boss'],
+    ['columnpos', '10 -20', _() -> [10, -20]],
+    ['criterion', 'dummy', _() -> 'dummy'],
+    ['dimension', 'minecraft:overworld', _() -> 'overworld'],
+    ['effect', 'minecraft:speed', _() -> 'speed'],
+    ['enchantment', 'minecraft:unbreaking', _() -> 'unbreaking'],
+    ['entities', '@s', _() -> [player()]],
+    ['entitytype', 'minecraft:pig', _() -> 'pig'],
+    ['float', '-1.25', _() -> -1.25],
+    ['floatrange', '-1.5..2.5', _() -> [-1.5, 2.5]],
+    ['identifier', 'scarpet_tests:argument', _() -> 'scarpet_tests:argument'],
+    ['int', '2147483648', _() -> 2147483648],
+    ['intrange', '2..5', _() -> [2, 5]],
+    ['item', 'minecraft:stone', _() -> ['stone', 1, nbt('{count:1,id:"minecraft:stone"}')]],
+    ['location', '10 64 -20', _() -> [10.5, 64, -19.5]],
+    ['lootcondition', 'minecraft:random_chance', _() -> 'random_chance'],
+    ['loottable', 'minecraft:chests/simple_dungeon', _() -> 'chests/simple_dungeon'],
+    ['message', 'hello argument world', _() -> format('w hello argument world')],
+    ['objective', 'sct_arg_obj', _() -> ['sct_arg_obj', scoreboard_property('sct_arg_obj', 'criterion')]],
+    ['particle', 'flame', _() -> 'flame'],
+    ['path', 'foo[0].bar', _() -> 'foo[0].bar'],
+    ['players', '@s[type=minecraft:player]', _() -> [query(player(), 'name')]],
+    ['pos', '10 64 -20', _() -> [10, 64, -20]],
+    ['recipe', 'minecraft:oak_planks', _() -> 'oak_planks'],
+    ['rotation', '90 30', _() -> [30, 90]],
+    ['scoreboardslot', 'sidebar', _() -> 'sidebar'],
+    ['scoreholder', 'ScarpetArgumentHolder', _() -> ['ScarpetArgumentHolder']],
+    ['slot', 'hotbar.0', _() -> [null, 0]],
+    ['sound', 'minecraft:block.note_block.pling', _() -> 'block.note_block.pling'],
+    ['storekey', 'scarpet_tests:argument', _() -> 'scarpet_tests:argument'],
+    ['string', '"hello argument world"', _() -> 'hello argument world'],
+    ['surfacelocation', '10.25 -20.5', _() -> [10.25, -20.5]],
+    ['swizzle', 'zx', _() -> 'xz'],
+    ['tag', '{answer:42}', _() -> nbt('{answer:42}')],
+    ['team', 'sct_arg_team', _() -> 'sct_arg_team'],
+    ['teamcolor', 'black', _() -> ['black', 255]],
+    ['term', 'single_word', _() -> 'single_word'],
+    ['text', 'hello unquoted world', _() -> 'hello unquoted world'],
+    ['time', '2s', _() -> 40],
+    ['uuid', '00000000-0000-0000-0000-000000000001', _() -> '00000000-0000-0000-0000-000000000001'],
+    ['yaw', '450', _() -> 90]
+];
+
+argument_types() -> map(_argument_specs(), _:0);
+
+argument_echo(value) -> (
+    global_argument_result = [type(value), value];
+    print(value);
+    1
+);
+
+_argument_check(kind, input, expected) -> (
+    global_argument_result = null;
+    result = run('tests argument ' + kind + ' ' + input);
+    expected_result = [type(expected), expected];
+    ok = result != null && result:0 == 1 && result:2 == null &&
+        global_argument_result == expected_result;
+    if(!ok,
+        message = '[tests] argument ' + kind + ' ' + input + ': expected ' + str(expected_result) +
+            ', received ' + str(global_argument_result) + ', run result ' + str(result);
+        print(message);
+        logger('warn', message)
+    );
+    ok
+);
+
+_argument_case(kind, input, expected) -> (
+    created_objective = kind == 'objective' && scoreboard('sct_arg_obj') == null;
+    created_team = kind == 'team' && team_list('sct_arg_team') == null;
+    if(created_objective, scoreboard_add('sct_arg_obj', 'dummy'));
+    if(created_team, team_add('sct_arg_team'));
+    outcome = try([true, _argument_check(kind, input, call(expected))],
+        'exception', [false, str(_), str(_trace)]);
+    if(created_objective, scoreboard_remove('sct_arg_obj'));
+    if(created_team, team_remove('sct_arg_team'));
+    if(!outcome:0, throw(outcome:1 + ' ' + outcome:2));
+    outcome:1
+);
+
+_argument_particle_roundtrip(name, input, expected_options) -> (
+    global_argument_result = null;
+    result = run('tests argument particle ' + input);
+    ok = result != null && result:0 == 1 && result:2 == null &&
+        global_argument_result != null && global_argument_result:0 == 'string';
+    if(ok,
+        serialized = global_argument_result:1;
+        ok = slice(serialized, 0, length(name)) == name &&
+            parse_nbt(slice(serialized, length(name))) == expected_options;
+        if(ok, return(_argument_check('particle', serialized, serialized)))
+    );
+    message = '[tests] particle options: expected ' + name + ' ' + str(expected_options) +
+        ', received ' + str(global_argument_result) + ', run result ' + str(result);
+    print(message);
+    logger('warn', message);
+    false
+);
+
+argument_tests() -> (
+    cases = map(_argument_specs(),
+        kind = _:0;
+        input = _:1;
+        expected = _:2;
+        ['argument ' + kind, _(outer(kind), outer(input), outer(expected)) ->
+            _argument_case(kind, input, expected)]
+    );
+    put(cases, null, ['argument particle namespaced', _() ->
+        _argument_check('particle', 'minecraft:flame', 'flame')
+    ]);
+    put(cases, null, ['argument particle block options', _() ->
+        _argument_particle_roundtrip('block',
+            'block{block_state:{id:"minecraft:oak_log",properties:{axis:"x"}}}',
+            {'block_state' -> {'id' -> 'minecraft:oak_log', 'properties' -> {'axis' -> 'x'}}})
+    ]);
+    put(cases, null, ['argument particle dust options', _() ->
+        _argument_particle_roundtrip('dust', 'dust{color:16711680,scale:2.0}',
+            {'color' -> 16711680, 'scale' -> 2})
+    ]);
+    cases
+);

@@ -195,6 +195,9 @@ auxiliary_tests(p, origin) -> (
         ['particle registry and playback', _(outer(p)) ->
             length(particle()) > 0 && particle('flame', pos(p), 1, 0, 0, p)
         ],
+        ['particle registry-backed options', _(outer(p)) ->
+            particle('block{block_state:"minecraft:stone"}', pos(p), 1, 0, 0, p)
+        ],
         ['particle_line', _(outer(p), outer(origin)) ->
             particle_line('flame', origin, [origin:0 + 1, origin:1, origin:2], 0.5, p) > 0
         ],
@@ -203,6 +206,9 @@ auxiliary_tests(p, origin) -> (
         ],
         ['unknown particle exception', _(outer(origin)) ->
             try((particle('scarpet_tests:missing', origin); false), 'unknown_particle', true)
+        ],
+        ['invalid particle options exception', _(outer(origin)) ->
+            try((particle('block{block_state:"scarpet_tests:missing"}', origin); false), 'unknown_particle', true)
         ],
         ['create_marker and remove_all_markers', _(outer(origin)) -> (
             marker = create_marker('Scarpet test', origin);

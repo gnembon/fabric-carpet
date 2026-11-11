@@ -23,12 +23,14 @@ import carpet.script.value.ValueConversions;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import net.minecraft.commands.ParseContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
@@ -186,11 +188,11 @@ public class ShapeDispatcher
         }
     }
 
-    public static ParticleOptions getParticleData(String name, RegistryAccess regs)
+    public static ParticleOptions getParticleData(String name, ParseContext context)
     {
         try
         {
-            return ParticleParser.getEffect(name, regs);
+            return ParticleParser.getEffect(name, context);
         }
         catch (IllegalArgumentException e)
         {
@@ -771,18 +773,17 @@ public class ShapeDispatcher
         {
             return p -> {
                 ParticleOptions particle;
-                Registry<Block> blocks = p.level().getServer().registryAccess().lookupOrThrow(Registries.BLOCK);
                 if (this.isitem)
                 {
                     if (Block.byItem(this.item.getItem()).defaultBlockState().isAir())
                     {
                         return;
                     }
-                    particle = getParticleData("block_marker " + blocks.getKey(Block.byItem(this.item.getItem())), p.level().registryAccess());
+                    particle = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, Block.byItem(this.item.getItem()).defaultBlockState());
                 }
                 else
                 {
-                    particle = getParticleData("block_marker " + blocks.getKey(this.blockState.getBlock()), p.level().registryAccess());
+                    particle = new BlockParticleOption(ParticleTypes.BLOCK_MARKER, this.blockState.getBlock().defaultBlockState());
                 }
 
                 Vec3 v = relativiseRender(p.level(), this.pos, 0);

@@ -50,7 +50,7 @@ public interface CarpetExtension
      *
      * Deprecated, Implement {@link CarpetExtension#registerCommands(CommandDispatcher, CommandBuildContext)}
      * 
-     * @param dispatcher The current {@link CommandSource<ServerCommandSource>} dispatcher 
+     * @param dispatcher The current {@link CommandDispatcher<CommandSourceStack>} dispatcher
      *                   where you should register your commands
      * 
      */
@@ -60,6 +60,11 @@ public interface CarpetExtension
     /**
      * Register your own commands right after vanilla commands are added
      * If that matters for you
+     *
+     * Use {@link net.minecraft.commands.Commands#hasPermission} for fixed permissions,
+     * {@link carpet.utils.CommandHelper#commandPermission} for live rule values, and
+     * {@link carpet.utils.CommandHelper#requireCondition} for source-independent conditions.
+     * Requirements needing an entity or world must explicitly use {@link carpet.helpers.CommandSourceRequirement}.
      *
      * @param dispatcher The current {@link CommandDispatcher<CommandSourceStack>} dispatcher
      *                   where you should register your commands
@@ -132,7 +137,7 @@ public interface CarpetExtension
      * rules.
      * 
      * @param lang A {@link String} being the language id selected by the user
-     * @return A {@link Map<String, String>} containing the string key with its 
+     * @return A {@link Map<String,String>} containing the string key with its
      *         respective translation {@link String} or an empty map if not available
      * 
      */

@@ -8,20 +8,20 @@ import carpet.fakes.ServerPlayerInterface;
 import carpet.patches.EntityPlayerMPFake;
 import carpet.utils.CommandHelper;
 import carpet.utils.Messenger;
-import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandPermissionLevels;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.GameModeArgument;
+import net.minecraft.commands.arguments.IntegerArgument;
+import net.minecraft.commands.arguments.StringArgument;
 import net.minecraft.commands.arguments.coordinates.RotationArgument;
 import net.minecraft.commands.arguments.coordinates.Vec3Argument;
 import net.minecraft.core.BlockPos;
@@ -42,9 +42,10 @@ import net.minecraft.world.phys.Vec3;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static net.minecraft.commands.suggestions.SuggestionProviders.serverOnly;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
-import static net.minecraft.commands.SharedSuggestionProvider.suggest;
+import static net.minecraft.commands.suggestions.SuggestionContext.suggest;
 
 public class PlayerCommand
 {
@@ -52,9 +53,9 @@ public class PlayerCommand
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext)
     {
         LiteralArgumentBuilder<CommandSourceStack> command = literal("player")
-                .requires((player) -> CommandHelper.canUseCommand(player, CarpetSettings.commandPlayer))
-                .then(argument("player", StringArgumentType.word())
-                        .suggests((c, b) -> suggest(getPlayerSuggestions(c.getSource()), b))
+                .requires(CommandHelper.commandPermission(() -> CarpetSettings.commandPlayer))
+                .then(argument("player", StringArgument.word())
+                        .suggests(serverOnly((server, c, b) -> suggest(getPlayerSuggestions(server), b)))
                         .then(literal("stop").executes(manipulation(EntityPlayerActionPack::stopAll)))
                         .then(makeActionCommand("use", ActionType.USE))
                         .then(makeActionCommand("jump", ActionType.JUMP))
@@ -65,8 +66,8 @@ public class PlayerCommand
                         .then(makeDropCommand("dropStack", true))
                         .then(makeActionCommand("swapHands", ActionType.SWAP_HANDS))
                         .then(literal("hotbar")
-                                .then(argument("slot", IntegerArgumentType.integer(1, 9))
-                                        .executes(c -> manipulate(c, ap -> ap.setSlot(IntegerArgumentType.getInteger(c, "slot"))))))
+                                .then(argument("slot", IntegerArgument.integer(1, 9))
+                                        .executes(c -> manipulate(c, ap -> ap.setSlot(IntegerArgument.getInteger(c, "slot"))))))
                         .then(literal("kill").executes(PlayerCommand::kill))
                         .then(literal("shadow"). executes(PlayerCommand::shadow))
                         .then(literal("mount").executes(manipulation(ap -> ap.mount(true)))
@@ -99,13 +100,13 @@ public class PlayerCommand
                                 .then(literal("left").executes(manipulation(ap -> ap.setStrafing(1))))
                                 .then(literal("right").executes(manipulation(ap -> ap.setStrafing(-1))))
                         ).then(literal("spawn").executes(PlayerCommand::spawn)
-                                .then(literal("in").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                .then(literal("in").requires(Commands.hasPermission(CommandPermissionLevels.LEVEL_GAMEMASTERS))
                                         .then(argument("gamemode", GameModeArgument.gameMode())
                                         .executes(PlayerCommand::spawn)))
                                 .then(literal("at").then(argument("position", Vec3Argument.vec3()).executes(PlayerCommand::spawn)
                                         .then(literal("facing").then(argument("direction", RotationArgument.rotation()).executes(PlayerCommand::spawn)
                                                 .then(literal("in").then(argument("dimension", DimensionArgument.dimension()).executes(PlayerCommand::spawn)
-                                                        .then(literal("in").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                                        .then(literal("in").requires(Commands.hasPermission(CommandPermissionLevels.LEVEL_GAMEMASTERS))
                                                                 .then(argument("gamemode", GameModeArgument.gameMode())
                                                                 .executes(PlayerCommand::spawn)
                                                         )))
@@ -122,8 +123,8 @@ public class PlayerCommand
                 .executes(manipulation(ap -> ap.start(type, Action.once())))
                 .then(literal("once").executes(manipulation(ap -> ap.start(type, Action.once()))))
                 .then(literal("continuous").executes(manipulation(ap -> ap.start(type, Action.continuous()))))
-                .then(literal("interval").then(argument("ticks", IntegerArgumentType.integer(1))
-                        .executes(c -> manipulate(c, ap -> ap.start(type, Action.interval(IntegerArgumentType.getInteger(c, "ticks")))))));
+                .then(literal("interval").then(argument("ticks", IntegerArgument.integer(1))
+                        .executes(c -> manipulate(c, ap -> ap.start(type, Action.interval(IntegerArgument.getInteger(c, "ticks")))))));
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> makeDropCommand(String actionName, boolean dropAll)
@@ -132,20 +133,20 @@ public class PlayerCommand
                 .then(literal("all").executes(manipulation(ap -> ap.drop(-2, dropAll))))
                 .then(literal("mainhand").executes(manipulation(ap -> ap.drop(-1, dropAll))))
                 .then(literal("offhand").executes(manipulation(ap -> ap.drop(40, dropAll))))
-                .then(argument("slot", IntegerArgumentType.integer(0, 40)).
-                        executes(c -> manipulate(c, ap -> ap.drop(IntegerArgumentType.getInteger(c, "slot"), dropAll))));
+                .then(argument("slot", IntegerArgument.integer(0, 40)).
+                        executes(c -> manipulate(c, ap -> ap.drop(IntegerArgument.getInteger(c, "slot"), dropAll))));
     }
 
-    private static Collection<String> getPlayerSuggestions(CommandSourceStack source)
+    private static Collection<String> getPlayerSuggestions(MinecraftServer server)
     {
         Set<String> players = new LinkedHashSet<>(List.of("Steve", "Alex"));
-        players.addAll(source.getOnlinePlayerNames());
+        players.addAll(List.of(server.getPlayerNames()));
         return players;
     }
 
     private static ServerPlayer getPlayer(CommandContext<CommandSourceStack> context)
     {
-        String playerName = StringArgumentType.getString(context, "player");
+        String playerName = StringArgument.getString(context, "player");
         MinecraftServer server = context.getSource().getServer();
         return server.getPlayerList().getPlayerByName(playerName);
     }
@@ -187,7 +188,7 @@ public class PlayerCommand
 
     private static boolean cantSpawn(CommandContext<CommandSourceStack> context)
     {
-        String playerName = StringArgumentType.getString(context, "player");
+        String playerName = StringArgument.getString(context, "player");
         MinecraftServer server = context.getSource().getServer();
         PlayerList manager = server.getPlayerList();
 
@@ -231,7 +232,7 @@ public class PlayerCommand
             Messenger.m(context.getSource(), "r Player ", "rb " + playerName, "r  is banned on this server");
             return true;
         }
-        if (manager.isUsingWhitelist() && manager.isWhiteListed(profile) && !Commands.LEVEL_GAMEMASTERS.check(context.getSource().permissions()))
+        if (manager.isUsingWhitelist() && manager.isWhiteListed(profile) && !CommandPermissionLevels.LEVEL_GAMEMASTERS.check(context.getSource().permissions()))
         {
             Messenger.m(context.getSource(), "r Whitelisted players can only be spawned by operators");
             return true;
@@ -302,7 +303,7 @@ public class PlayerCommand
             // Force override flying to false for survival-like players, or they will fly too
             flying = false;
         }
-        String playerName = StringArgumentType.getString(context, "player");
+        String playerName = StringArgument.getString(context, "player");
         if (playerName.length() > maxNameLength(source.getServer()))
         {
             Messenger.m(source, "rb Player name: " + playerName + " is too long");

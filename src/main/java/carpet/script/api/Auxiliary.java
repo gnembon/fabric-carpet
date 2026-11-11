@@ -35,6 +35,7 @@ import carpet.script.value.ValueConversions;
 import com.google.common.collect.Lists;
 import net.minecraft.SharedConstants;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.ParseContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Rotations;
@@ -203,7 +204,7 @@ public class Auxiliary
                     }
                 }
             }
-            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, ParseContext.of(cc.source()));
             Vec3 vec = locator.vec;
             if (player == null)
             {
@@ -228,7 +229,7 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             ServerLevel world = cc.level();
             String particleName = lv.get(0).getString();
-            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, ParseContext.of(cc.source()));
             Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
             double density = 1.0;
@@ -272,7 +273,7 @@ public class Auxiliary
             CarpetContext cc = (CarpetContext) c;
             ServerLevel world = cc.level();
             String particleName = lv.get(0).getString();
-            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, world.registryAccess());
+            ParticleOptions particle = ShapeDispatcher.getParticleData(particleName, ParseContext.of(cc.source()));
             Vector3Argument pos1 = Vector3Argument.findIn(lv, 1);
             Vector3Argument pos2 = Vector3Argument.findIn(lv, pos1.offset);
 

@@ -4,6 +4,8 @@ import carpet.helpers.OptimizedExplosion;
 import carpet.CarpetSettings;
 import carpet.logging.LoggerRegistry;
 import carpet.logging.logHelpers.ExplosionLogHelper;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.breeze.Breeze;
@@ -85,13 +87,15 @@ public abstract class Explosion_optimizedTntMixin
         }
     }
 
-    @Redirect(method = "hurtEntities",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;pushFromExplosion(Lnet/minecraft/world/phys/Vec3;)V"))
-    private void setVelocityAndUpdateLogging(Entity entity, Vec3 velocity)
+    // Log before player-controlled entities switch to packet-based knockback.
+    @ModifyExpressionValue(method = "hurtEntities",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/Vec3;scale(D)Lnet/minecraft/world/phys/Vec3;"))
+    private Vec3 logEntityKnockback(Vec3 velocity, @Local(name = "entity") Entity entity)
     {
-        if (eLogger != null) {
-            eLogger.onEntityImpacted(entity, velocity.subtract(entity.getDeltaMovement()));
+        if (eLogger != null)
+        {
+            eLogger.onEntityImpacted(entity, velocity);
         }
-        entity.push(velocity);
+        return velocity;
     }
 }
