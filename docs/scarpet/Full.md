@@ -2308,7 +2308,8 @@ Here is a list of built-in types, with their return value formats, as well as a 
   * `'path'`: a valid nbt path 
   * `'objective'`: a tuple of scoreboard objective name and its criterion
   * `'criterion'`: name of a scoreboard criterion 
-  * `'particle'`: name of a particle 
+  * `'particle'`: a vanilla particle command string, including any options, such as `flame` or
+  `block{block_state:"minecraft:stone"}`
   * `'recipe'`: name of a valid recipe. Can be fed to recipe_data function.
   * `'advancement'`: name of an advancement 
   * `'lootcondition'`: a loot condition 
