@@ -1,11 +1,11 @@
 package carpet.helpers;
 
 import carpet.fakes.PistonBlockInterface;
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.dispenser.BlockSource;
-import net.minecraft.core.dispenser.DispenseItemBehavior;
-import net.minecraft.core.dispenser.OptionalDispenseItemBehavior;
+import net.minecraft.core.dispenser.DispenseBehavior;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -188,19 +188,20 @@ public class BlockRotator
         return CarpetSettings.flippinCactus && entity instanceof Player p && p.getOffhandItem().getItem() == Items.CACTUS;
     }
 
-    public static class CactusDispenserBehaviour extends OptionalDispenseItemBehavior implements DispenseItemBehavior
+    public static class CactusDispenserBehaviour implements DispenseBehavior
     {
+        private static final MapCodec<CactusDispenserBehaviour> CODEC = MapCodec.unit(CactusDispenserBehaviour::new);
+
         @Override
-        protected ItemStack execute(BlockSource source, ItemStack stack)
+        public DispenseResult execute(BlockSource source, ItemStack stack)
         {
-            if (CarpetSettings.rotatorBlock)
-            {
-                return BlockRotator.dispenserRotate(source, stack);
-            }
-            else
-            {
-                return super.execute(source, stack);
-            }
+            return DispenseResult.success(BlockRotator.dispenserRotate(source, stack));
+        }
+
+        @Override
+        public MapCodec<CactusDispenserBehaviour> codec()
+        {
+            return CODEC;
         }
     }
 }

@@ -261,7 +261,7 @@ public abstract class CommandArgument
             new VanillaUnconfigurableArgument("team", TeamArgument::team,
                     (c, p) -> StringValue.of(TeamArgument.getTeam(c, p).getName()), false
             ),
-            new VanillaUnconfigurableArgument("time", TimeArgument::time,
+            new VanillaUnconfigurableArgument("time", TimeArgument::unboundedTime,
                     (c, p) -> new NumericValue(IntegerArgument.getInteger(c, p)), false
             ),
             new VanillaUnconfigurableArgument("uuid", UuidArgument::uuid,
