@@ -34,6 +34,7 @@ import carpet.script.value.Value;
 import carpet.script.value.ValueConversions;
 import com.google.common.collect.Lists;
 import net.minecraft.SharedConstants;
+import net.minecraft.advancements.*;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.ParseContext;
 import net.minecraft.core.BlockPos;
@@ -56,6 +57,8 @@ import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.PlayerAdvancements;
+import net.minecraft.server.ServerAdvancementManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
@@ -1046,6 +1049,112 @@ public class Auxiliary
                     ? nbtsv
                     : new NBTSerializableValue(val.getString());
             return BooleanValue.of(((CarpetScriptHost) c.host).writeTagFile(tagValue.getTag(), fdesc));
+        });
+
+        expression.addContextFunction("advancement", -1, (c, t, lv) ->
+        {
+            CarpetContext cc = (CarpetContext) c;
+            ServerAdvancementManager serverAdvancementManager = cc.server().getAdvancements();
+            AdvancementTree advancementTree = serverAdvancementManager.tree();
+
+            if (lv.isEmpty())
+            {
+                List<Value> rootList = new ArrayList<>();
+
+                for (AdvancementNode advancementNode: advancementTree.roots()) {
+                    rootList.add(ValueConversions.of(advancementNode.holder().id()));
+                }
+
+                return ListValue.wrap(rootList);
+            }
+
+            if (lv.size() == 1)
+            {
+                String rawString = lv.get(0).getString();
+                Identifier advancementId = InputValidator.identifierOf(rawString);
+                AdvancementNode advancementNode = advancementTree.get(advancementId);
+
+                if (advancementNode == null) {
+                    return Value.NULL;
+                }
+
+                Value parent = ValueConversions.of(advancementNode.parent() != null ? advancementNode.parent().holder().id(): null);
+
+                List<Value> childrenList = new ArrayList<>();
+                for (AdvancementNode child: advancementNode.children()) {
+                    childrenList.add(ValueConversions.of(child.holder().id()));
+                }
+                Value children =  ListValue.wrap(childrenList);
+
+                Value criteria = ListValue.wrap(advancementNode.advancement().criteria().keySet().stream().map(StringValue::of).toList());
+
+                Value retMap = MapValue.wrap(Map.of(
+                    StringValue.of("parent"), parent,
+                    StringValue.of("children"), children,
+                    StringValue.of("criteria"), criteria
+                ));
+
+                if (advancementNode.advancement().display().isPresent()) {
+                    DisplayInfo display = advancementNode.advancement().display().get();
+
+                    retMap = retMap.add(MapValue.wrap(Map.of(
+                            StringValue.of("title"), StringValue.of(display.title().getString()),
+                            StringValue.of("description"), StringValue.of(display.description().getString()),
+                            StringValue.of("advancementType"), StringValue.of(display.type().getDisplayName().getString()),
+                            StringValue.of("showToast"), BooleanValue.of(display.showToast()),
+                            StringValue.of("announceToChat"), BooleanValue.of(display.announceToChat()),
+                            StringValue.of("hidden"), BooleanValue.of(display.hidden())
+                    )));
+
+                }
+
+                return retMap;
+            }
+
+            if (lv.size() == 2)
+            {
+                ServerPlayer player = EntityValue.getPlayerByValue(cc.server(), lv.get(0));
+                if (player == null)
+                {
+                    return Value.NULL;
+                }
+
+                String rawString = lv.get(1).getString();
+                Identifier advancementId = InputValidator.identifierOf(rawString);
+
+                PlayerAdvancements playerAdvancements = cc.server().getPlayerList().getPlayerAdvancements(player);
+
+                AdvancementHolder advancementHolder = serverAdvancementManager.get(advancementId);
+                if (advancementHolder == null)
+                {
+                    return Value.NULL;
+                }
+
+                AdvancementProgress progress = playerAdvancements.getOrStartProgress(advancementHolder);
+
+                List<Value> criteriaRemainingList = new ArrayList<>();
+                progress.getRemainingCriteria().iterator().forEachRemaining(
+                        (criterion) -> criteriaRemainingList.add(StringValue.of(criterion))
+                );
+
+                List<Value> criteriaCompletedList = new ArrayList<>();
+                progress.getCompletedCriteria().iterator().forEachRemaining(
+                        (criterion) -> criteriaCompletedList.add(StringValue.of(criterion))
+                );
+
+                return MapValue.wrap(Map.of(
+                        StringValue.of("remainingCriteria"), ListValue.wrap(criteriaRemainingList),
+                        StringValue.of("completedCriteria"), ListValue.wrap(criteriaCompletedList),
+                        StringValue.of("done"), BooleanValue.of(progress.isDone())
+                ));
+            }
+
+            if (lv.size() > 2)
+            {
+                throw new InternalExpressionException("'advancement' requires 0, 1 or 2 arguments");
+            }
+
+            return Value.NULL;
         });
 
         expression.addContextFunction("statistic", 3, (c, t, lv) ->

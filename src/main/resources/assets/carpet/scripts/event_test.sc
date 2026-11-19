@@ -346,6 +346,15 @@ __on_player_swings_hand(player, hand) ->
 	print('  - hand: '+hand);
 );
 
+__on_advancement(player, advancement) ->
+(
+	print('');
+	print('__on_advancement(player, advancement)');
+	print('player completed advancement:');
+	print('  - player: '+player);
+	print('  - advancement: '+advancement);
+);
+
 __on_start() ->
 (
     print('');

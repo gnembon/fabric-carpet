@@ -328,6 +328,9 @@ Triggered when a player statistic changes. Doesn't notify on periodic an rhythmi
 `time_since_death`, `time_since_rest`, and `played_one_minute` since these are triggered every tick. Event 
 is handled before scoreboard values for these statistics are changed.
 
+### `__on_advancement(player, advancement)`
+Triggered when a player makes an advancement.
+
 ## Custom events and hacking into scarpet event system
 
 App programmers can define and trigger their own custom events. Unlike built-in events, all custom events pass a single value

@@ -978,6 +978,18 @@ public class CarpetEventServer
             }
         };
 
+        public static final Event ADVANCEMENT = new Event("advancement", 2, false)
+        {
+            @Override
+            public void onPlayerAdvancement(ServerPlayer player, Identifier advancementId)
+            {
+                handler.call(() -> Arrays.asList(
+                        new EntityValue(player),
+                        NBTSerializableValue.nameFromRegistryId(advancementId)
+                ), player::createCommandSourceStack);
+            }
+        };
+
         public static final Event STATISTICS = new Event("statistic", 4, false)
         {
             private <T> Identifier getStatId(Stat<T> stat)
@@ -1238,6 +1250,10 @@ public class CarpetEventServer
         public boolean onPlayerMessage(ServerPlayer player, String message)
         {
             return false;
+        }
+
+        public void onPlayerAdvancement(ServerPlayer player, Identifier advancementId)
+        {
         }
 
         public void onPlayerStatistic(ServerPlayer player, Stat<?> stat, int amount)

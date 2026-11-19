@@ -122,6 +122,7 @@ sound
 spawn
 spawn_potential
 stack_limit
+advancement
 statistic
 store_app_data
 structures
