@@ -12,6 +12,7 @@ import carpet.script.value.EntityValue;
 import carpet.script.value.ListValue;
 import carpet.script.value.NBTSerializableValue;
 import carpet.script.value.NumericValue;
+import carpet.script.value.StringValue;
 import carpet.script.value.Value;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -26,8 +27,10 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -169,6 +172,16 @@ public class Entities
             if (who instanceof final NumericValue numericValue)
             {
                 return EntityValue.of(((CarpetContext) c).level().getEntity((int) numericValue.getLong()));
+            }
+            if (who instanceof final NBTSerializableValue nbt && nbt.getTag() instanceof IntArrayTag)
+            {
+                ListValue listValue = (ListValue) nbt.get(new StringValue("[]"));
+                if (listValue.length() != 4)
+                {
+                    throw new InternalExpressionException("'entity_id' requires a valid numeric ID, UUID, or NBT Int Array of length 4");
+                }
+                return EntityValue.of(((CarpetContext) c).level().getEntity(UUIDUtil.uuidFromIntArray(
+                        listValue.getItems().stream().mapToInt(v -> ((NumericValue) v).getInt()).toArray())));
             }
             return EntityValue.of(((CarpetContext) c).level().getEntity(UUID.fromString(who.getString())));
         });
