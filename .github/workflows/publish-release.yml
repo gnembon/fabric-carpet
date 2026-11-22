@@ -144,6 +144,7 @@ jobs:
            ${{ github.event.release.body }}
            ​
            Get it on Github Releases: <${{ github.event.release.html_url }}>
+           On Modrinth: <https://modrinth.com/mod/carpet/version/${{ github.event.release.tag_name }}>
            Or on CurseForge
   Merge-Scarpet-Docs:
     runs-on: ubuntu-latest
