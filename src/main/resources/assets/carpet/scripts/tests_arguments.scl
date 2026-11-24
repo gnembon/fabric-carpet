@@ -24,7 +24,7 @@ _argument_specs() -> [
     ['int', '2147483648', _() -> 2147483648],
     ['intrange', '2..5', _() -> [2, 5]],
     ['item', 'minecraft:stone', _() -> ['stone', 1, nbt('{count:1,id:"minecraft:stone"}')]],
-    ['location', '10 64 -20', _() -> [10.5, 64.5, -19.5]],
+    ['location', '10 64 -20', _() -> [10.5, 64, -19.5]],
     ['lootcondition', 'minecraft:random_chance', _() -> 'random_chance'],
     ['loottable', 'minecraft:chests/simple_dungeon', _() -> 'chests/simple_dungeon'],
     ['message', 'hello argument world', _() -> format('w hello argument world')],
