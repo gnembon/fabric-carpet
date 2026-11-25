@@ -312,6 +312,30 @@ auxiliary_tests(p, origin) -> (
             (counts == null || type(counts) == 'map') &&
                 (one == null || (type(one) == 'list' && length(one) == 2))
         )],
+        ['advancement command to get roots', _() -> (
+            advancement() ~ 'story/root'
+        )],
+        ['advancement attribute query', _() -> (
+            get(advancement('story/root'), 'children') ~ 'story/mine_stone' != null &&
+            get(advancement('story/mine_stone'), 'parent') == 'story/root' &&
+            has(advancement('story/mine_stone'), 'hidden') &&
+            has(advancement('story/mine_stone'), 'announceToChat') &&
+            has(advancement('story/mine_stone'), 'showToast')
+        )],
+        ['advancement graceful failure', _() -> (
+            get(advancement('story/root'), 'parent') == null &&
+            has(advancement('recipes/root'), 'showToast') != true
+        )],
+        ['advancements of the invoking player', _(outer(p)) -> (
+            value = advancement(p, 'adventure/root');
+            has(value, 'completedCriteria') &&
+            has(value, 'remainingCriteria') &&
+            has(value, 'done')
+        )],
+        ['advancements related to player - nonexistent arguments', _(outer(p)) -> (
+            advancement('not_a_player', 'adventure/root') == null ||
+            advancement(p, 'non_existent/root') == null
+        )],
         ['statistic of the invoking player', _(outer(p)) -> (
             value = statistic(p, 'custom', 'jump');
             value == null || (type(value) == 'number' && value >= 0)
