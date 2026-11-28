@@ -1,4 +1,9 @@
 {
+  "carpet.rule.fakePlayerSleepIgnore.name": "睡眠统计忽略假人",
+  "carpet.rule.fakePlayerSleepIgnore.desc": "统计睡眠人数时忽略假人",
+  "carpet.rule.fakePlayerSleepIgnore.extra.0": "players_sleeping_percentage 游戏规则仍然适用于真人玩家。",
+  "carpet.rule.fakePlayerSleepIgnore.extra.1": "睡着的假人不能帮助跳过夜晚。",
+
   "carpet.rule.antiCheatDisabled.name": "禁用反作弊移动监测",
   "carpet.rule.antiCheatDisabled.desc": "防止玩家因为“本服务器未启用飞行”，“移动过快”等原因被踢出",
   
